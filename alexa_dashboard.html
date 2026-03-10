@@ -142,17 +142,10 @@ tr.cr{display:none} tr.cr.open{display:table-row}
 
   <!-- ── DASHBOARD ── -->
   <div class="tab active" id="tab-dashboard">
-    <div class="kpi-row">
-      <div class="kpi bl"><div class="kpi-lbl">Total Encours</div><div class="kpi-val">40,5 M€</div><div class="kpi-sub">Produits structurés</div></div>
-      <div class="kpi gr"><div class="kpi-lbl">CA 2026</div><div class="kpi-val">342 855 €</div><div class="kpi-sub">Chiffre d'affaires</div></div>
-      <div class="kpi am"><div class="kpi-lbl">Produits Actifs</div><div class="kpi-val">74</div><div class="kpi-sub">sur 86 total</div><div class="kpi-exit">+ 12 EXIT</div></div>
-      <div class="kpi pu"><div class="kpi-lbl">Contrats Actifs</div><div class="kpi-val">148</div><div class="kpi-sub">sous gestion</div></div>
-      <div class="kpi cy"><div class="kpi-lbl">UF Moyen</div><div class="kpi-val">4,13 %</div><div class="kpi-sub">Produits en cours</div></div>
-      <div class="kpi pk"><div class="kpi-lbl">Rdmt Moyen</div><div class="kpi-val">12,56 %</div><div class="kpi-sub">Pondéré encours</div></div>
-    </div>
+    <div class="kpi-row" id="dash-kpis"></div>
     <div class="chart-row cr2">
-      <div class="cc"><div class="cc-t">Chiffre d'Affaires YTD — 01/01 → 08/03 (2025 vs 2026)</div><div class="cv" style="height:220px"><canvas id="cCA"></canvas></div></div>
-      <div class="cc"><div class="cc-t">Production YTD — 01/01 → 08/03 (2025 vs 2026)</div><div class="cv" style="height:220px"><canvas id="cProd"></canvas></div></div>
+      <div class="cc"><div class="cc-t" id="tt-cCA">Chiffre d'Affaires YTD</div><div class="cv" style="height:220px"><canvas id="cCA"></canvas></div></div>
+      <div class="cc"><div class="cc-t" id="tt-cProd">Production YTD</div><div class="cv" style="height:220px"><canvas id="cProd"></canvas></div></div>
     </div>
     <div class="chart-row cr1">
       <div class="cc"><div class="cc-t">Répartition par Sous-Jacent</div><div class="cv" style="height:580px"><canvas id="cSJ"></canvas></div></div>
@@ -1254,6 +1247,7 @@ document.querySelectorAll('.nb').forEach(b=>b.addEventListener('click',()=>{
   document.querySelectorAll('.tab').forEach(p=>p.classList.remove('active'));
   document.getElementById('tab-'+t).classList.add('active');
   document.getElementById('pgT').textContent={dashboard:'Dashboard',produits:'Produits',expo:'Expo Clients',clients:'Clients',enveloppes:'Enveloppes',cashdispo:'Cash Dispo'}[t]||t;
+  if(t==='dashboard') renderDashboard();
   if(t==='expo'&&!eInit)initExpo();
   if(t==='clients'&&!cInit)initClients();
   if(t==='enveloppes'&&!envInit)initEnv();
@@ -1306,207 +1300,222 @@ function mkHBar(id,labels,data,colors){
   });
 }
 
-// Secteur — exact Excel values (sum=41,456,397.15)
-mkDonut('cSec',
-  ['AUTRES','AUTOMOBILE','BANQUE','ENERGIE','CONSOMMATION','CONSTRUCTION'],
-  [11594007,8463890,7981000,6194500,5232000,1000000]
-);
-// Type produit
-mkDonut('cType',['KG','PHOENIX','Athena'],[8361362,19112230,12991806],
-  ['#d97706','#2563eb','#16a34a']);
-// Profil
-mkDonut('cProfil',
-  ['DYNAMIQUE','ÉQ.RENTE','DYN.RENTE','ÉQUILIBRÉ','PRUDENT','PRU.RENTE'],
-  [25424449,6781537,3666960,2149320,1572132,871000]
-);
-// Sous-jacents — source: Excel Dashboard C30:D47 exact values, sorted desc
-mkHBar('cSJ',
-  [
-    "TAUX",
-    "STELLANTIS",
-    "SCOR",
-    "ENGIE",
-    "MERCEDES",
-    "CARREFOUR",
-    "CR. AGRICOLE",
-    "FDJ",
-    "PERNOD RICARD",
-    "SOLVAY",
-    "EDENRED",
-    "TOTAL",
-    "INDICE",
-    "ICADE",
-    "LVH/SAN/TOT",
-    "LVH/BNP/REN",
-    "ARM/PDD",
-    "BNP/P.RICARD",
-    "BNP",
-    "VOLKSWAGEN",
-    "ENI",
-    "BNP/STELLANTIS"
-  ],
-  [
-    8361362, 5722890, 3349000, 2780500, 2256000, 1974000, 1964000, 1758000, 1500000, 1497000, 1465000, 1457000, 1189750, 1000000, 650000, 642000, 630000, 582000, 500000, 485000, 460000, 241896
-  ],
-  PAL
-);
-// Contrats
-mkHBar('cContrat',
-  ['Compte-titres','Assur.-vie Generali','FAS Lombard','Contrat Capi.','Assur.-vie Nortia','PER Generali','PER Nortia'],
-  [35376230,1725020,1699000,1300362,241681,73890,49214],
-  '#16a34a'
-);
-// Broker
-mkDonut('cBroker',['NEXO','IRBIS','KEPLER'],[38036647,2261000,167750],
-  ['#2563eb','#7c3aed','#16a34a']);
+// ── DASHBOARD DYNAMIQUE ──────────────────────────────────────────────────
+function renderDashboard(){
+  // ── Helpers ──
+  function parseStrike(s){
+    if(!s) return null;
+    const p=s.split('/');
+    if(p.length!==3) return null;
+    return new Date(+p[2],+p[1]-1,+p[0]);
+  }
+  function fmtM(v){ return (v/1e6).toFixed(1).replace('.',',')+'\u202fM€'; }
+  function fmtE2(v){ return Math.round(v).toLocaleString('fr-FR')+'\u202f€'; }
+  function fmtPct2(v){ return (v*100).toFixed(2).replace('.',',')+'\u202f%'; }
+  function ddmm(d){ return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0'); }
+  function kpiFn(cls,lbl,val,sub,extra){
+    return `<div class="kpi ${cls}"><div class="kpi-lbl">${lbl}</div><div class="kpi-val">${val}</div><div class="kpi-sub">${sub}</div>${extra||''}</div>`;
+  }
+  function destroyChart(id){ const c=Chart.getChart(id); if(c) c.destroy(); }
 
-// Évolution annuelle
-new Chart(document.getElementById('cEvol'),{
-  type:'bar',
-  data:{
-    labels:['2023','2024','2025','2026'],
-    datasets:[
-      {label:'Nb Produits',data:[2,14,42,16],backgroundColor:'#2563eb',borderRadius:4,yAxisID:'y',order:2},
-      {label:'Encours (M€)',data:[1.24,9.36,21.57,8.29],type:'line',borderColor:'#d97706',backgroundColor:'rgba(217,119,6,.1)',borderWidth:2,tension:.4,fill:true,yAxisID:'y1',order:1,pointBackgroundColor:'#d97706',pointRadius:5}
-    ]
-  },
-  options:{responsive:true,maintainAspectRatio:false,
-    plugins:{
-      legend:{position:'top',labels:{font:{size:11},color:'#374151'}},
-      datalabels:{
-        color:ctx=>ctx.dataset.type==='line'?'#d97706':'#fff',
-        font:{size:10,weight:'bold'},
-        anchor:ctx=>ctx.dataset.type==='line'?'top':'center',
-        align:ctx=>ctx.dataset.type==='line'?'top':'center',
-        offset:ctx=>ctx.dataset.type==='line'?4:0,
-        formatter:(v,ctx)=>ctx.dataset.type==='line'?v.toFixed(2).replace('.',',')+'M':(v>0?v:'')
+  // ── Data slices ──
+  const prods   = PRODUITS.filter(r=>r.t===1);
+  const active  = prods.filter(r=>r.exit!=='EXIT');
+  const exitP   = prods.filter(r=>r.exit==='EXIT');
+  const allCli  = PRODUITS.filter(r=>r.t===0);
+  const activeIdx = new Set(active.map(r=>r.i));
+  const activeCli = allCli.filter(r=>activeIdx.has(r.pi));
+
+  // ── YTD (calculé avant KPIs car utilisé dedans) ──
+  const now   = new Date();
+  const s2026 = new Date(2026,0,1);
+  const s2025 = new Date(2025,0,1);
+  const e2025 = new Date(2025,now.getMonth(),now.getDate());
+  const todayStr = ddmm(now);
+
+  const p2026 = active.filter(r=>{ const d=parseStrike(r.ds); return d&&d>=s2026&&d<=now; });
+  const p2025 = prods.filter(r=>{ const d=parseStrike(r.ds); return d&&d>=s2025&&d<=e2025; });
+
+  const caYTD2026  = p2026.reduce((s,r)=>s+(r.enc||0)*(r.uf||0),0);
+
+  // ── KPIs ──
+  const totalEnc  = active.reduce((s,r)=>s+(r.enc||0),0);
+  const ca2026all = active.reduce((s,r)=>s+(r.enc||0)*(r.uf||0),0);
+  const ufMoyen   = totalEnc>0 ? ca2026all/totalEnc : 0;
+  const rdmtMoyen = totalEnc>0 ? active.reduce((s,r)=>s+(r.enc||0)*(r.tx||0),0)/totalEnc : 0;
+  const nContrats = CLIENTS.length;
+
+  document.getElementById('dash-kpis').innerHTML =
+    kpiFn('bl','Total Encours',fmtM(totalEnc),'Produits structurés')
+    +kpiFn('gr','CA 2026 (YTD)',fmtE2(caYTD2026),'Chiffre d\'affaires')
+    +kpiFn('am','Produits Actifs',active.length,'sur '+prods.length+' total',`<div class="kpi-exit">+ ${exitP.length} EXIT</div>`)
+    +kpiFn('pu','Contrats Actifs',nContrats,'sous gestion')
+    +kpiFn('cy','UF Moyen',fmtPct2(ufMoyen),'Produits en cours')
+    +kpiFn('pk','Rdmt Moyen',fmtPct2(rdmtMoyen),'Pondéré encours');
+
+  const caYTD2025  = p2025.reduce((s,r)=>s+(r.enc||0)*(r.uf||0),0);
+  const prodYTD2026= p2026.reduce((s,r)=>s+(r.enc||0),0);
+  const prodYTD2025= p2025.reduce((s,r)=>s+(r.enc||0),0);
+
+  // Update chart titles dynamically
+  const ttCA = document.getElementById('tt-cCA');
+  const ttProd = document.getElementById('tt-cProd');
+  if(ttCA)  ttCA.textContent  = `Chiffre d'Affaires YTD \u2014 01/01 \u2192 ${todayStr} (2025 vs 2026)`;
+  if(ttProd) ttProd.textContent= `Production YTD \u2014 01/01 \u2192 ${todayStr} (2025 vs 2026)`;
+
+  // ── Secteur ──
+  const bySec={};
+  active.forEach(r=>{ if(r.sec) bySec[r.sec]=(bySec[r.sec]||0)+(r.enc||0); });
+  const secE=Object.entries(bySec).sort((a,b)=>b[1]-a[1]);
+
+  // ── SJ ──
+  const bySJ={};
+  active.forEach(r=>{ if(r.sj) bySJ[r.sj]=(bySJ[r.sj]||0)+(r.enc||0); });
+  const sjE=Object.entries(bySJ).sort((a,b)=>b[1]-a[1]);
+
+  // SJ labels mapping (short display names)
+  const SJ_LABEL={'CREDIT AGRICOLE':'CR. AGRICOLE','LVMH/SANOFI/TOTAL':'LVH/SAN/TOT','LVMH/BNP/RENAULT':'LVH/BNP/REN'};
+  const sjLabels=sjE.map(([k])=>SJ_LABEL[k]||k);
+  const sjData=sjE.map(([,v])=>v);
+
+  // ── Type produit ──
+  const typeEnc={KG:0,PHOENIX:0,Athena:0};
+  active.forEach(r=>{
+    if(r.pc===-1) typeEnc.KG+=(r.enc||0);
+    else if(r.cp==='RAPPEL') typeEnc.Athena+=(r.enc||0);
+    else typeEnc.PHOENIX+=(r.enc||0);
+  });
+
+  // ── Broker ──
+  const byBk={};
+  active.forEach(r=>{ if(r.bk) byBk[r.bk]=(byBk[r.bk]||0)+(r.enc||0); });
+  const bkE=Object.entries(byBk).sort((a,b)=>b[1]-a[1]);
+
+  // ── Contrat (from t=0 client rows of active products) ──
+  const byCt={};
+  activeCli.forEach(r=>{ if(r.ct) byCt[r.ct]=(byCt[r.ct]||0)+(r.enc||0); });
+  const ctE=Object.entries(byCt).sort((a,b)=>b[1]-a[1]);
+
+  // ── Profil (from CLIENTS.ps grouped by profil) ──
+  const byPro={};
+  CLIENTS.forEach(c=>{ if(c.profil&&c.ps>0) byPro[c.profil]=(byPro[c.profil]||0)+(c.ps||0); });
+  const proE=Object.entries(byPro).sort((a,b)=>b[1]-a[1]);
+
+  // ── Évolution annuelle (all products incl EXIT) ──
+  const byYear={};
+  active.forEach(r=>{
+    const d=parseStrike(r.ds); if(!d) return;
+    const y=d.getFullYear();
+    if(!byYear[y]) byYear[y]={nb:0,enc:0};
+    byYear[y].nb++;
+    byYear[y].enc+=(r.enc||0);
+  });
+  const years=Object.keys(byYear).sort();
+  const yearNb=years.map(y=>byYear[y].nb);
+  const yearEnc=years.map(y=>+(byYear[y].enc/1e6).toFixed(2));
+
+  // ── Re-create all charts ──
+  ['cSec','cType','cProfil','cSJ','cContrat','cBroker','cEvol','cCA','cProd'].forEach(destroyChart);
+
+  mkDonut('cSec', secE.map(([k])=>k), secE.map(([,v])=>v));
+  mkDonut('cType',['KG','PHOENIX','Athena'],[typeEnc.KG,typeEnc.PHOENIX,typeEnc.Athena],['#d97706','#2563eb','#16a34a']);
+  mkDonut('cProfil', proE.map(([k])=>k), proE.map(([,v])=>v));
+  mkHBar('cSJ', sjLabels, sjData, PAL);
+  mkHBar('cContrat', ctE.map(([k])=>k), ctE.map(([,v])=>v), '#16a34a');
+  mkDonut('cBroker', bkE.map(([k])=>k), bkE.map(([,v])=>v));
+
+  // Évolution
+  new Chart(document.getElementById('cEvol'),{
+    type:'bar',
+    data:{
+      labels:years,
+      datasets:[
+        {label:'Nb Produits',data:yearNb,backgroundColor:'#2563eb',borderRadius:4,yAxisID:'y',order:2},
+        {label:'Encours (M€)',data:yearEnc,type:'line',borderColor:'#d97706',backgroundColor:'rgba(217,119,6,.1)',borderWidth:2,tension:.4,fill:true,yAxisID:'y1',order:1,pointBackgroundColor:'#d97706',pointRadius:5}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'top',labels:{font:{size:11},color:'#374151'}},
+        datalabels:{color:ctx=>ctx.dataset.type==='line'?'#d97706':'#fff',font:{size:10,weight:'bold'},
+          anchor:ctx=>ctx.dataset.type==='line'?'top':'center',
+          align:ctx=>ctx.dataset.type==='line'?'top':'center',
+          offset:ctx=>ctx.dataset.type==='line'?4:0,
+          formatter:(v,ctx)=>ctx.dataset.type==='line'?v.toFixed(2).replace('.',',')+' M':(v>0?v:'')}
+      },
+      scales:{
+        y:{grid:{color:'#f0f0f0'},title:{display:true,text:'Nb Produits',color:'#6b7280'},ticks:{color:'#6b7280'},border:{display:false}},
+        y1:{position:'right',grid:{drawOnChartArea:false},title:{display:true,text:'M€',color:'#6b7280'},ticks:{color:'#6b7280'}},
+        x:{grid:{display:false},ticks:{color:'#374151'}}
       }
-    },
-    scales:{
-      y:{grid:{color:'#f0f0f0'},title:{display:true,text:'Nb Produits',color:'#6b7280'},ticks:{color:'#6b7280'},border:{display:false}},
-      y1:{position:'right',grid:{drawOnChartArea:false},title:{display:true,text:'M€',color:'#6b7280'},ticks:{color:'#6b7280'}},
-      x:{grid:{display:false},ticks:{color:'#374151'}}
     }
-  }
-});
+  });
 
-// CA YTD 01/01→08/03 : 2025 vs 2026 (strike date comme référence)
-const caData=[348181,342855];
-const caDelta=(caData[1]-caData[0])/caData[0];
-const caGrowthPlugin={
-  id:'caGrowth',
-  afterDraw(chart){
-    const ctx=chart.ctx;
-    const meta=chart.getDatasetMeta(0);
-    const b0=meta.data[0], b1=meta.data[1];
-    if(!b0||!b1) return;
-    const x0=b0.x, x1=b1.x;
-    const y0=b0.y, y1=b1.y;
-    const midX=(x0+x1)/2;
-    const midY=Math.min(y0,y1)-28;
-    const col=caDelta>=0?'#16a34a':'#dc2626';
-    const arrow=caDelta>=0?'▲':'▼';
-    const pct=(caDelta*100).toFixed(1).replace('.',',')+'%';
-    // dashed connecting line between bar tops
-    ctx.save();
-    ctx.strokeStyle=col; ctx.lineWidth=1.5; ctx.setLineDash([4,3]);
-    ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(midX,midY+12); ctx.lineTo(x1,y1); ctx.stroke();
-    ctx.setLineDash([]);
-    // badge background
-    const label=arrow+' '+pct+' YTD';
-    ctx.font='bold 12px system-ui,sans-serif';
-    const tw=ctx.measureText(label).width;
-    const bx=midX-tw/2-9, by=midY-14, bw=tw+18, bh=22;
-    ctx.fillStyle=caDelta>=0?'#dcfce7':'#fee2e2';
-    ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,5); ctx.fill();
-    ctx.strokeStyle=col; ctx.lineWidth=1; ctx.stroke();
-    // text
-    ctx.fillStyle=col; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText(label,midX,midY-3);
-    ctx.restore();
+  // ── CA YTD helper plugin ──
+  function growthPlugin(id){
+    const delta=(arguments[1]-arguments[2])/(arguments[2]||1);
+    return {id,afterDraw(chart){
+      const ctx=chart.ctx,meta=chart.getDatasetMeta(0);
+      const b0=meta.data[0],b1=meta.data[1];
+      if(!b0||!b1) return;
+      const x0=b0.x,x1=b1.x,y0=b0.y,y1=b1.y;
+      const midX=(x0+x1)/2,midY=Math.min(y0,y1)-28;
+      const d=(b1._model&&b1._model.y?b1._model.y:b1.y)-(b0._model&&b0._model.y?b0._model.y:b0.y);
+      // recompute delta from actual data
+      const ds=chart.data.datasets[0].data;
+      const dl=(ds[1]-ds[0])/(ds[0]||1);
+      const col=dl>=0?'#16a34a':'#dc2626';
+      const arrow=dl>=0?'▲':'▼';
+      const pct=(dl*100).toFixed(1).replace('.',',')+' %';
+      ctx.save();
+      ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
+      ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(midX,midY+12);ctx.lineTo(x1,y1);ctx.stroke();
+      ctx.setLineDash([]);
+      const label=arrow+' '+pct+' YTD';
+      ctx.font='bold 12px system-ui,sans-serif';
+      const tw=ctx.measureText(label).width;
+      const bx=midX-tw/2-9,by=midY-14,bw=tw+18,bh=22;
+      ctx.fillStyle=dl>=0?'#dcfce7':'#fee2e2';
+      ctx.beginPath();ctx.roundRect(bx,by,bw,bh,5);ctx.fill();
+      ctx.strokeStyle=col;ctx.lineWidth=1;ctx.stroke();
+      ctx.fillStyle=col;ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(label,midX,midY-3);
+      ctx.restore();
+    }};
   }
-};
-new Chart(document.getElementById('cCA'),{
-  type:'bar',
-  data:{
-    labels:['2025 (YTD 08/03)','2026 (YTD 08/03)'],
-    datasets:[{
-      label:'CA (€)',data:caData,
-      backgroundColor:['#93c5fd','#2563eb'],
-      borderRadius:5
-    }]
-  },
-  options:{responsive:true,maintainAspectRatio:false,
-    layout:{padding:{top:55,right:10}},
-    plugins:{legend:{display:false},
-      datalabels:{anchor:'end',align:'top',offset:5,clip:false,color:'#1e3a5f',font:{size:13,weight:'bold'},
-        formatter:v=>Math.round(v).toLocaleString('fr-FR')+' €'}
-    },
-    scales:{
-      x:{grid:{display:false},ticks:{color:'#374151',font:{size:14,weight:'bold'}}},
-      y:{grid:{color:'#f0f0f0'},ticks:{callback:v=>Math.round(v/1000)+'k€',color:'#6b7280'},border:{display:false}}
-    }
-  },
-  plugins:[caGrowthPlugin]
-});
 
-// Production YTD 01/01→08/03 : encours produits lancés (strike date), EXIT inclus
-const prodData=[8428284,8294000];
-const prodDelta=(prodData[1]-prodData[0])/prodData[0];
-const prodGrowthPlugin={
-  id:'prodGrowth',
-  afterDraw(chart){
-    const ctx=chart.ctx;
-    const meta=chart.getDatasetMeta(0);
-    const b0=meta.data[0], b1=meta.data[1];
-    if(!b0||!b1) return;
-    const x0=b0.x, x1=b1.x, y0=b0.y, y1=b1.y;
-    const midX=(x0+x1)/2, midY=Math.min(y0,y1)-28;
-    const col=prodDelta>=0?'#16a34a':'#dc2626';
-    const arrow=prodDelta>=0?'▲':'▼';
-    const pct=(prodDelta*100).toFixed(1).replace('.',',')+'%';
-    ctx.save();
-    ctx.strokeStyle=col; ctx.lineWidth=1.5; ctx.setLineDash([4,3]);
-    ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(midX,midY+12); ctx.lineTo(x1,y1); ctx.stroke();
-    ctx.setLineDash([]);
-    const label=arrow+' '+pct+' YTD';
-    ctx.font='bold 12px system-ui,sans-serif';
-    const tw=ctx.measureText(label).width;
-    const bx=midX-tw/2-9, by=midY-14, bw=tw+18, bh=22;
-    ctx.fillStyle=prodDelta>=0?'#dcfce7':'#fee2e2';
-    ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,5); ctx.fill();
-    ctx.strokeStyle=col; ctx.lineWidth=1; ctx.stroke();
-    ctx.fillStyle=col; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText(label,midX,midY-3);
-    ctx.restore();
-  }
-};
-new Chart(document.getElementById('cProd'),{
-  type:'bar',
-  data:{
-    labels:['2025 (YTD 08/03)','2026 (YTD 08/03)'],
-    datasets:[{
-      label:'Production (€)',data:prodData,
-      backgroundColor:['#86efac','#16a34a'],
-      borderRadius:5
-    }]
-  },
-  options:{responsive:true,maintainAspectRatio:false,
-    layout:{padding:{top:55,right:10}},
-    plugins:{legend:{display:false},
-      datalabels:{anchor:'end',align:'top',offset:5,clip:false,color:'#1e3a5f',font:{size:12,weight:'bold'},
-        formatter:v=>(v/1e6).toFixed(2).replace('.',',')+' M€'}
-    },
-    scales:{
-      x:{grid:{display:false},ticks:{color:'#374151',font:{size:14,weight:'bold'}}},
-      y:{grid:{color:'#f0f0f0'},ticks:{callback:v=>(v/1e6).toFixed(1).replace('.',',')+' M€',color:'#6b7280'},border:{display:false}}
-    }
-  },
-  plugins:[prodGrowthPlugin]
-});
+  new Chart(document.getElementById('cCA'),{
+    type:'bar',
+    data:{labels:['2025 (YTD '+todayStr+')','2026 (YTD '+todayStr+')'],
+      datasets:[{label:'CA (€)',data:[caYTD2025,caYTD2026],backgroundColor:['#93c5fd','#2563eb'],borderRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:55,right:10}},
+      plugins:{legend:{display:false},
+        datalabels:{anchor:'end',align:'top',offset:5,clip:false,color:'#1e3a5f',font:{size:13,weight:'bold'},
+          formatter:v=>Math.round(v).toLocaleString('fr-FR')+' €'}},
+      scales:{x:{grid:{display:false},ticks:{color:'#374151',font:{size:13,weight:'bold'}}},
+        y:{grid:{color:'#f0f0f0'},ticks:{callback:v=>Math.round(v/1000)+'k€',color:'#6b7280'},border:{display:false}}}
+    },plugins:[growthPlugin('caGrowth2')]
+  });
+
+  new Chart(document.getElementById('cProd'),{
+    type:'bar',
+    data:{labels:['2025 (YTD '+todayStr+')','2026 (YTD '+todayStr+')'],
+      datasets:[{label:'Production (€)',data:[prodYTD2025,prodYTD2026],backgroundColor:['#86efac','#16a34a'],borderRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:55,right:10}},
+      plugins:{legend:{display:false},
+        datalabels:{anchor:'end',align:'top',offset:5,clip:false,color:'#1e3a5f',font:{size:12,weight:'bold'},
+          formatter:v=>(v/1e6).toFixed(2).replace('.',',')+' M€'}},
+      scales:{x:{grid:{display:false},ticks:{color:'#374151',font:{size:14,weight:'bold'}}},
+        y:{grid:{color:'#f0f0f0'},ticks:{callback:v=>(v/1e6).toFixed(1).replace('.',',')+' M€',color:'#6b7280'},border:{display:false}}}
+    },plugins:[growthPlugin('prodGrowth2')]
+  });
+}
 
 // ── PRODUITS ───────────────────────────────────────────────────────────────
 let pSearch='',pSJs=new Set(),pSecs=new Set(),pBk='',pExit='',pClient='';
+
+// Call dashboard on load
+renderDashboard();
 
 // Build client lookup
 const clOf={};
@@ -1677,6 +1686,19 @@ renderP();
 
 // ── EXPO ───────────────────────────────────────────────────────────────────
 let eInit=false,eClients=new Set();
+
+// Lookup exact euros per (clientName, sj) from PRODUITS active products
+const EXACT_SJ_EUROS = {};
+(()=>{
+  const prodSJ={};
+  PRODUITS.filter(r=>r.t===1&&r.exit!=='EXIT').forEach(r=>{ prodSJ[r.i]=r.sj; });
+  PRODUITS.filter(r=>r.t===0).forEach(r=>{
+    const sj=prodSJ[r.pi];
+    if(!sj||!r.enc) return;
+    const key=r.nom.trim().toUpperCase()+'|'+sj;
+    EXACT_SJ_EUROS[key]=(EXACT_SJ_EUROS[key]||0)+(r.enc||0);
+  });
+})();
 
 function initExpo(){
   eInit=true;
@@ -1855,7 +1877,7 @@ function renderE(){
       const v=r[h]||0;
       const w=Math.min(50,Math.round(v*1.5));
       const col=v>20?'#dc2626':v>10?'#d97706':'#2563eb';
-      const euros=v>0?'≈ '+Math.round(v/100*(r.enc||0)).toLocaleString('fr-FR')+' €':'';
+      const _exactKey=r.client.trim().toUpperCase()+'|'+h;const _exact=EXACT_SJ_EUROS[_exactKey];const euros=v>0?(_exact!==undefined?_exact.toLocaleString('fr-FR'):(v/100*(r.enc||0)).toLocaleString('fr-FR',{maximumFractionDigits:0}))+' €':'';
       cells+=`<td style="text-align:center;padding:4px 6px" title="${euros?euros:''}">${v>0?`<div class="pb" title="${euros}">
         <div class="pbf" style="width:${w}px;background:${col}"></div>
         <span class="pbl" style="cursor:default" title="${euros}">${v.toFixed(1).replace('.',',')+'%'}</span>
