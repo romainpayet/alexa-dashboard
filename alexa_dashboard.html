@@ -128,6 +128,7 @@ tr.cr{display:none} tr.cr.open{display:table-row}
     <button class="nb" data-tab="clients"><span class="nb-ic">👥</span><span>Clients</span></button>
     <button class="nb" data-tab="cashdispo"><span class="nb-ic">💵</span><span>Cash Dispo</span></button>
     <button class="nb" data-tab="enveloppes"><span class="nb-ic">📋</span><span>Enveloppes</span></button>
+    <button class="nb" data-tab="cashflow"><span class="nb-ic">💰</span><span>Cash Flow</span></button>
   </nav>
   <div class="sb-ft">
     <button class="col-btn" id="colBtn"><span class="nb-ic">◀</span><span id="colLbl">Réduire</span></button>
@@ -136,7 +137,7 @@ tr.cr{display:none} tr.cr.open{display:table-row}
 <div class="main">
   <div class="topbar">
     <div class="pg-title" id="pgT">Dashboard</div>
-    <div class="dt-bdg">Données au 08/03/2026</div>
+    <div class="dt-bdg" id="dt-bdg"></div>
   </div>
   <div class="content">
 
@@ -277,6 +278,34 @@ tr.cr{display:none} tr.cr.open{display:table-row}
         <table id="tblCD">
           <thead id="thdCD"></thead>
           <tbody id="tbCD"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CASH FLOW ── -->
+  <div class="tab" id="tab-cashflow">
+    <!-- chart + side panel -->
+    <div style="display:flex;gap:12px;flex-shrink:0;margin-bottom:10px;align-items:stretch">
+      <div class="cc" style="flex:1;min-width:0">
+        <div class="cc-t">Cash Flow Mensuel — Coupons &amp; Nominal (net PaS) — <span id="cf-kpi-inline" style="font-weight:400;color:#6b7280;font-size:11px"></span></div>
+        <div class="cv" style="height:190px"><canvas id="cfChart"></canvas></div>
+      </div>
+      <div id="cf-panel" style="width:300px;flex-shrink:0;background:#fff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;display:flex;flex-direction:column;max-height:230px">
+        <div id="cf-panel-hd" style="padding:8px 14px;background:#f8fafd;border-bottom:1px solid #e5e7eb;font-size:12px;font-weight:700;color:#1e3a5f;flex-shrink:0">← Cliquer sur une barre</div>
+        <div id="cf-panel-body" style="flex:1;overflow-y:auto"></div>
+      </div>
+    </div>
+    <!-- bottom detail table -->
+    <div class="tw" style="flex:1">
+      <div class="tc" style="justify-content:space-between;flex-shrink:0">
+        <span id="cf-table-title" style="font-weight:700;font-size:13px;color:#1e3a5f">Sélectionner un produit ci-dessus</span>
+      </div>
+      <div class="sb2" id="cf-table-sb"></div>
+      <div class="ts">
+        <table id="tblCF">
+          <thead id="thCF"></thead>
+          <tbody id="tbCF"><tr><td colspan="5" style="text-align:center;color:#9ca3af;padding:30px;font-size:13px">Cliquer sur une barre du graphique puis sur un produit</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -1083,7 +1112,7 @@ const CLIENTS = [
   {pp:'PM',cpt:'88002632',client:'COGOHR',profil:'PRUDENT',ps:1030361.55,ps_kg:1030361.55,ps_risques:0,fdg:0,ftc:0,pas:0.0,reporting:'OUI',dernier:'30/10/2025',nom:'BONNE',email:'direction-cogohr@wanadoo.fr',type_cpt:'Contrat capitalisation',type_short:'Capi.',qcc:0},
   {pp:'PM',cpt:'92200244094',client:'TRESCO',profil:'ÉQUILIBRÉ RENTE',ps:755000,ps_kg:0,ps_risques:755000,fdg:0.008,ftc:0.0024,pas:0.0,reporting:'OUI',dernier:'31/01/2026',nom:'TRESFELS',email:'norbert.tresfels@gmail.com',type_cpt:'Compte-titres',type_short:'CTO',qcc:0.5},
   {pp:'PM',cpt:'93100136001',client:'ALTER EGO HOLDING',profil:'ÉQUILIBRÉ RENTE',ps:1328000,ps_kg:633000,ps_risques:695000,fdg:0.006,ftc:0.0018,pas:0.0,reporting:'OUI',dernier:'31/01/2026',nom:'BOIREAU',email:'virginie.boireau@alterego.re',type_cpt:'Compte-titres',type_short:'CTO',qcc:0.6},
-  {pp:'PP',cpt:'93100144801',client:'MONTEIL Sophie',profil:'DYNAMIQUE RENTE',ps:1702000,ps_kg:200000,ps_risques:1502000,fdg:0.002,ftc:0.0041,pas:0.0,reporting:'OUI',dernier:'31/12/2025',nom:'MONTEIL',email:'sophiemonteil974@gmail.com',type_cpt:'Compte-titres',type_short:'CTO',qcc:0.8},
+  {pp:'PP',cpt:'93100144801',client:'MONTEIL Sophie',profil:'DYNAMIQUE RENTE',ps:1702000,ps_kg:200000,ps_risques:1502000,fdg:0.002,ftc:0.0041,pas:0.0,reporting:'OUI',dernier:'31/12/2025',nom:'MONTEIL',email:'sophiemonteil974@gmail.com',type_cpt:'Compte-titres',type_short:'CTO',qcc:1},
   {pp:'PM',cpt:'92200242914',client:'HELIOS',profil:'DYNAMIQUE',ps:1750000,ps_kg:250000,ps_risques:1500000,fdg:0,ftc:0.0012,pas:0.0,reporting:'OUI',dernier:'30/11/2025',nom:'BRENIER',email:'q.brenier@cubee.fr',type_cpt:'Compte-titres',type_short:'CTO',qcc:0.9},
   {pp:'PM',cpt:'92200243987',client:'HORIZON',profil:'DYNAMIQUE',ps:1750000,ps_kg:250000,ps_risques:1500000,fdg:0,ftc:0.0012,pas:0.0,reporting:'OUI',dernier:'30/11/2025',nom:'BRENIER',email:'j.brenier@b-back.com',type_cpt:'Compte-titres',type_short:'CTO',qcc:0.9},
   {pp:'PM',cpt:'2409-156694',client:'FINANCIERE COAXIS',profil:'DYNAMIQUE RENTE',ps:938000,ps_kg:0,ps_risques:938000,fdg:0.002,ftc:0.0055,pas:0.0,reporting:'OUI',dernier:'31/12/2025',nom:'REGLAT',email:'andre.reglat@orange.fr',type_cpt:'FAS Lombard',type_short:'FAS',qcc:0.9},
@@ -1096,7 +1125,7 @@ const CLIENTS = [
   {pp:'PP',cpt:'92200243231',client:'LASCAR Pierre',profil:'DYNAMIQUE',ps:173000,ps_kg:0,ps_risques:173000,fdg:0,ftc:0.0028,pas:0.314,reporting:'OUI',dernier:'30/11/2025',nom:'LASCAR',email:'pierrelascar@gmail.com',type_cpt:'Compte-titres',type_short:'CTO',qcc:0.6},
   {pp:'PP',cpt:'93100174601',client:'PAYET Alain',profil:'ÉQUILIBRÉ RENTE',ps:385000,ps_kg:100000,ps_risques:285000,fdg:0.008,ftc:0.0024,pas:0.314,reporting:'OUI',dernier:'31/12/2025',nom:'PAYET',email:'a.payet@rdr.re',type_cpt:'Compte-titres',type_short:'CTO',qcc:0.8},
   {pp:'PP',cpt:'92200243288',client:'HUYGHE Jean-Luc',profil:'PRUDENT',ps:299000,ps_kg:0,ps_risques:299000,fdg:0.004,ftc:0.0024,pas:0.314,reporting:'NON',dernier:'',nom:'HUYGHE',email:'drjlhuyghe@hotmail.com',type_cpt:'Compte-titres',type_short:'CTO',qcc:0.9},
-  {pp:'PM',cpt:'92200242615',client:'COQUITE',profil:'DYNAMIQUE',ps:284000,ps_kg:0,ps_risques:284000,fdg:0.008,ftc:0.0028,pas:0.0,reporting:'OUI',dernier:'31/12/2025',nom:'IMHOFF',email:'juanimhoff88@hotmail.es',type_cpt:'Compte-titres',type_short:'CTO',qcc:0.9},
+  {pp:'PM',cpt:'92200242615',client:'COQUITE',profil:'DYNAMIQUE',ps:284000,ps_kg:0,ps_risques:284000,fdg:0.008,ftc:0.0028,pas:0.0,reporting:'OUI',dernier:'31/12/2025',nom:'IMHOFF',email:'juanimhoff88@hotmail.es',type_cpt:'Compte-titres',type_short:'CTO',qcc:1},
   {pp:'PP',cpt:'93100278401',client:'PAYET Romain',profil:'DYNAMIQUE',ps:354000,ps_kg:20000,ps_risques:334000,fdg:0,ftc:0.0018,pas:0.0,reporting:'NON',dernier:'',nom:'PAYET',email:'romain.payet@essec.edu',type_cpt:'Compte-titres',type_short:'CTO',qcc:1},
   {pp:'PM',cpt:'92200242906',client:'SCI L C M',profil:'ÉQUILIBRÉ RENTE',ps:184000,ps_kg:0,ps_risques:184000,fdg:0.002,ftc:0.0028,pas:0.0,reporting:'OUI',dernier:'31/12/2025',nom:'REGLAT',email:'andre.reglat@orange.fr',type_cpt:'Compte-titres',type_short:'CTO',qcc:0.7},
   {pp:'PP',cpt:'93100150901',client:'LAHAYE Francois-Marie',profil:'ÉQUILIBRÉ RENTE',ps:200000,ps_kg:0,ps_risques:200000,fdg:0.008,ftc:0.0028,pas:0.314,reporting:'OUI',dernier:'31/01/2026',nom:'LAHAYE',email:'francoismarie.lahaye@gmail.com',type_cpt:'Compte-titres',type_short:'CTO',qcc:1},
@@ -1146,7 +1175,7 @@ const CLIENTS = [
   {pp:'PM',cpt:'92200242162',client:'SCI KLEBER HOEPFFNER',profil:'DYNAMIQUE',ps:95000,ps_kg:0,ps_risques:95000,fdg:0.008,ftc:0.0028,pas:0.0,reporting:'NON',dernier:'',nom:'HOEPFFNER',email:'antoine.hoepffner@alexafinance.fr',type_cpt:'Compte-titres',type_short:'CTO',qcc:0.9},
   {pp:'PP',cpt:'93100120101',client:'LAFARGUE Michel',profil:'ÉQUILIBRÉ',ps:47000,ps_kg:0,ps_risques:47000,fdg:0.008,ftc:0.0028,pas:0.314,reporting:'OUI',dernier:'30/11/2025',nom:'LAFARGUE',email:'michel.lafargue@yahoo.fr',type_cpt:'Compte-titres',type_short:'CTO',qcc:0.5},
   {pp:'PP',cpt:'83713937',client:'GHIZZARDI Alexandre',profil:'DYNAMIQUE',ps:32940,ps_kg:0,ps_risques:32940,fdg:0,ftc:0,pas:0.0,reporting:'OUI',dernier:'30/07/2025',nom:'GHIZZARDI',email:'alex.ghizzardi@laposte.net',type_cpt:'Assurance-vie Generali',type_short:'AV Generali',qcc:0.7},
-  {pp:'PP',cpt:'83716728',client:'MONTEIL Sophie',profil:'DYNAMIQUE',ps:0,ps_kg:0,ps_risques:0,fdg:0,ftc:0,pas:0.0,reporting:'OUI',dernier:'31/12/2025',nom:'MONTEIL',email:'sophiemonteil974@gmail.com',type_cpt:'Assurance-vie Generali',type_short:'AV Generali',qcc:0.8},
+  {pp:'PP',cpt:'83716728',client:'MONTEIL Sophie',profil:'DYNAMIQUE',ps:0,ps_kg:0,ps_risques:0,fdg:0,ftc:0,pas:0.0,reporting:'OUI',dernier:'31/12/2025',nom:'MONTEIL',email:'sophiemonteil974@gmail.com',type_cpt:'Assurance-vie Generali',type_short:'AV Generali',qcc:1},
   {pp:'PP',cpt:'83712472',client:'ROUFFILANGE Claude',profil:'DYNAMIQUE',ps:41190,ps_kg:0,ps_risques:41190,fdg:0,ftc:0,pas:0.0,reporting:'NON',dernier:'',nom:'ROUFFILANGE',email:'claude.rouffi@gmail.com',type_cpt:'Assurance-vie Generali',type_short:'AV Generali',qcc:0.9},
   {pp:'PP',cpt:'96019068',client:'EL-OKEILY Mohamed',profil:'DYNAMIQUE',ps:0,ps_kg:0,ps_risques:0,fdg:0,ftc:0,pas:0.0,reporting:'NON',dernier:'',nom:'EL-OKEILY',email:'elokeily_m@yahoo.fr',type_cpt:'PER Generali',type_short:'PER Generali',qcc:0.6},
   {pp:'PP',cpt:'83713780',client:'LAHAYE Francois-Marie',profil:'ÉQUILIBRÉ RENTE',ps:89590,ps_kg:10000,ps_risques:79590,fdg:0,ftc:0,pas:0.0,reporting:'OUI',dernier:'31/01/2026',nom:'LAHAYE',email:'francoismarie.lahaye@gmail.com',type_cpt:'Assurance-vie Generali',type_short:'AV Generali',qcc:1},
@@ -1183,7 +1212,7 @@ const CLIENTS = [
   {pp:'PP',cpt:'83714010',client:'HOEPFFNER Emmanuel',profil:'DYNAMIQUE',ps:4000,ps_kg:0,ps_risques:4000,fdg:0,ftc:0,pas:0.0,reporting:'OUI',dernier:'31/12/2025',nom:'HOEPFFNER',email:'hoepffner.e@gmail.com',type_cpt:'Assurance-vie Generali',type_short:'AV Generali',qcc:0.9},
   {pp:'PP',cpt:'83029101',client:'HOEPFFNER Pierre',profil:'DYNAMIQUE',ps:3500,ps_kg:0,ps_risques:3500,fdg:0,ftc:0,pas:0.0,reporting:'OUI',dernier:'31/12/2025',nom:'HOEPFFNER',email:'hoepffner.p@gmail.com',type_cpt:'Assurance-vie Generali',type_short:'AV Generali',qcc:0.9},
   {pp:'PP',cpt:'83713028',client:'VERBRUGGEN Charlie ',profil:'DYNAMIQUE',ps:25000,ps_kg:0,ps_risques:25000,fdg:0,ftc:0,pas:0.0,reporting:'OUI',dernier:'31/08/2025',nom:'VERBRUGGEN',email:'charlieverbruggen03@gmail.com',type_cpt:'Assurance-vie Generali',type_short:'AV Generali',qcc:0.9},
-  {pp:'PP',cpt:'83714578',client:'PAYET Charlotte',profil:'DYNAMIQUE',ps:10000,ps_kg:0,ps_risques:10000,fdg:0,ftc:0,pas:0.0,reporting:'NON',dernier:'',nom:'PAYET',email:'chapayet@gmail.com',type_cpt:'Assurance-vie Generali',type_short:'AV Generali',qcc:0.6},
+  {pp:'PP',cpt:'83714578',client:'PAYET Charlotte',profil:'DYNAMIQUE',ps:10000,ps_kg:0,ps_risques:10000,fdg:0,ftc:0,pas:0.0,reporting:'NON',dernier:'',nom:'PAYET',email:'chapayet@gmail.com',type_cpt:'Assurance-vie Generali',type_short:'AV Generali',qcc:1},
   {pp:'PP',cpt:'83715852',client:'DUFOUR Quentin',profil:'DYNAMIQUE',ps:15000,ps_kg:0,ps_risques:15000,fdg:0,ftc:0,pas:0.0,reporting:'OUI',dernier:'31/01/2026',nom:'DUFOUR',email:'qd.dufour@gmail.com',type_cpt:'Assurance-vie Generali',type_short:'AV Generali',qcc:0.9},
   {pp:'PP',cpt:'OC830104673',client:'FROTIER DE BAGNEUX Caroline ',profil:'ÉQUILIBRÉ',ps:8000,ps_kg:0,ps_risques:8000,fdg:0,ftc:0,pas:0.0,reporting:'NON',dernier:'',nom:'FROTIER DE BAGNEUX',email:'carolineaubert9@gmail.com',type_cpt:'Assurance-vie Generali',type_short:'AV Generali',qcc:1},
   {pp:'PP',cpt:'83029504',client:'LEE GUAN KOK Laetitia',profil:'ÉQUILIBRÉ',ps:11500,ps_kg:6000,ps_risques:5500,fdg:0,ftc:0,pas:0.0,reporting:'OUI',dernier:'31/12/2025',nom:'LEE GUAN KOK',email:'laetitialeeguankok@gmail.com',type_cpt:'Assurance-vie Generali',type_short:'AV Generali',qcc:0.6},
@@ -1226,7 +1255,7 @@ const CLIENTS = [
   {pp:'PP',cpt:'92200245400',client:'BOULAIRE Anne',profil:'DYNAMIQUE',ps:0,ps_kg:0,ps_risques:0,fdg:0.008,ftc:0,pas:0.314,reporting:'NON',dernier:'',nom:'BOULAIRE',email:'boulaireanne@gmail.com',type_cpt:'Compte-titres',type_short:'CTO',qcc:0.9},
   {pp:'PM',cpt:'92200245407',client:'SENTUCQ-DULAU HOLDING',profil:'DYNAMIQUE',ps:0,ps_kg:0,ps_risques:0,fdg:0,ftc:0,pas:0.0,reporting:'NON',dernier:'',nom:'SENTUCQ-RIGAL',email:'jeansentucqrigal@gmail.com',type_cpt:'Compte-titres',type_short:'CTO',qcc:0.9}
 ];
-const ENVELOPES=[{"isin": "XS3033811632", "nom": "NexAutocall Alexa Copper Mining Février 2026", "strike": "27/02/2026", "month": "Février 2026", "partenaire": "NEXO", "coupon": 0.113, "objectif": 542000, "tot_env": 522000, "tot_int": 525000, "tot_verse": 522000, "tot_valide": 522000, "uf": "", "clients": [{"ct": "CTO NORTIA", "nom": "DR Charlie Verbruggen", "int": 25000, "vf": "OUI", "vr": 25000, "dv": "26/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "CTO NORTIA", "nom": "TRESCO", "int": 100000, "vf": "OUI", "vr": 100000, "dv": "26/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "CTO NORTIA", "nom": "Sanchez Muriel", "int": 13000, "vf": "OUI", "vr": 13000, "dv": "26/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "FAS LOMBARD", "nom": "Sophie Monteil", "int": 150000, "vf": "OUI", "vr": 150000, "dv": "19/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "CTO NORTIA", "nom": "SCI AGR4", "int": 70000, "vf": "OUI", "vr": 70000, "dv": "23/02/2026", "de": "OUI", "ds": "", "fk": "OUI"}, {"ct": "CTO NORTIA", "nom": "Franck Dupouy", "int": 50000, "vf": "OUI", "vr": 50000, "dv": "26/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "CTO NORTIA", "nom": "Romain Payet", "int": 50000, "vf": "OUI", "vr": 50000, "dv": "20/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "CTO NORTIA", "nom": "Alexandre Ghizzardi", "int": 17000, "vf": "OUI", "vr": 14000, "dv": "26/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "CTO NORTIA", "nom": "Alter Ego Holding", "int": 50000, "vf": "OUI", "vr": 50000, "dv": "20/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}]}, {"isin": "XS3156906847", "nom": "NexAutocall Alexa Rendement Total Decrement 3.40 Fevrier 2026", "strike": "27/02/2026", "month": "Février 2026", "partenaire": "NEXO", "coupon": 0.11, "objectif": 500000, "tot_env": 475000, "tot_int": 475000, "tot_verse": 485000, "tot_valide": 485000, "uf": "", "clients": [{"ct": "CTO NORTIA", "nom": "GMS Investissement", "int": 365000, "vf": "OUI", "vr": 375000, "dv": "26/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "FAS LOMBARD", "nom": "Laurent Réglat", "int": 50000, "vf": "OUI", "vr": 50000, "dv": "25/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "CTO NORTIA", "nom": "Romain Payet", "int": 50000, "vf": "OUI", "vr": 50000, "dv": "20/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "CTO NORTIA", "nom": "SEL DR GUEMMAR", "int": 10000, "vf": "OUI", "vr": 10000, "dv": "17/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}]}, {"isin": "XS3256119440", "nom": "NEXAUTOCALL ALEXA EDENRED DECREMENT 1EUR FEVRIER 2026", "strike": "27/02/2026", "month": "Février 2026", "partenaire": "NEXO", "coupon": 0.18, "objectif": 560000, "tot_env": 485000, "tot_int": 485000, "tot_verse": 485000, "tot_valide": 485000, "uf": "", "clients": [{"ct": "CTO NORTIA", "nom": "GMS Investissement", "int": 400000, "vf": "OUI", "vr": 400000, "dv": "04/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "CTO NORTIA", "nom": "Frédéric Colombini", "int": 15000, "vf": "OUI", "vr": 15000, "dv": "04/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "CTO NORTIA", "nom": "SCI Kleber", "int": 20000, "vf": "OUI", "vr": 20000, "dv": "05/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "CTO NORTIA", "nom": "Alter Ego Holding", "int": 50000, "vf": "OUI", "vr": 50000, "dv": "20/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}]}, {"isin": "XS3256122584", "nom": "NexAutocall Alexa Rendement Edenred Decrement 1 EUR Février 2026", "strike": "27/02/2026", "month": "Février 2026", "partenaire": "NEXO", "coupon": 0.118, "objectif": 540000, "tot_env": 500000, "tot_int": 500000, "tot_verse": 480000, "tot_valide": 480000, "uf": "", "clients": [{"ct": "CTO NORTIA", "nom": "GMS Investissement", "int": 225000, "vf": "OUI", "vr": 200000, "dv": "13/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "FAS LOMBARD", "nom": "Laurent Réglat", "int": 55000, "vf": "OUI", "vr": 55000, "dv": "25/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "FAS LOMBARD", "nom": "Monteil Sophie", "int": 105000, "vf": "OUI", "vr": 105000, "dv": "17/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "CTO NORTIA", "nom": "Franck Dupouy", "int": 50000, "vf": "OUI", "vr": 50000, "dv": "26/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "CTO NORTIA", "nom": "Payet Romain", "int": 45000, "vf": "OUI", "vr": 45000, "dv": "23/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "CTO NORTIA", "nom": "Alexandre Ghizzardi", "int": 20000, "vf": "OUI", "vr": 25000, "dv": "10/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}]}, {"isin": "FRIP000020O8", "nom": "NexAutocall Alexa Rendement Carrefour Decrement 0.87 EUR Mars 2026", "strike": "13/03/2026", "month": "Mars 2026", "partenaire": "NEXO", "coupon": 0.103, "objectif": 850000, "tot_env": 850000, "tot_int": 850000, "tot_verse": 453000, "tot_valide": 453000, "uf": "4,5%", "clients": [{"ct": "CTO NORTIA", "nom": "TRESCO", "int": 150000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "FAS LOMBARD", "nom": "Sophie MONTEIL", "int": 150000, "vf": "OUI", "vr": 150000, "dv": "17/02/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "CTO NORTIA", "nom": "LMR Finances", "int": 128000, "vf": "OUI", "vr": 128000, "dv": "10/03/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "CTO NORTIA", "nom": "SCI AGR4", "int": 25000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Nathalie BOUDEY", "int": 100000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Compagnie de Gestion d'Aquitaine", "int": 55000, "vf": "OUI", "vr": 55000, "dv": "10/03/2026", "de": "OUI", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Jean-Luc HUYGHE", "int": 50000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Franck DUPOUY", "int": 20000, "vf": "OUI", "vr": 20000, "dv": "09/03/2026", "de": "OUI", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Alain PAYET", "int": 50000, "vf": "OUI", "vr": 50000, "dv": "09/03/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Romain PAYET", "int": 50000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Pierre THOUEILLES", "int": 12000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Pierre-Edouard BROCHET", "int": 30000, "vf": "OUI", "vr": 30000, "dv": "09/03/2026", "de": "OUI", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "AZUR MARKETING", "int": 20000, "vf": "OUI", "vr": 20000, "dv": "10/03/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Christophe WECK", "int": 10000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}]}, {"isin": "XS3256117824", "nom": "NexAutocall Alexa Rendement Solvay Decrement 2.20 EUR Mars 2026", "strike": "16/03/2026", "month": "Mars 2026", "partenaire": "NEXO", "coupon": 0.1915, "objectif": 575000, "tot_env": 575000, "tot_int": 575000, "tot_verse": 25000, "tot_valide": 25000, "uf": "4,5%", "clients": [{"ct": "CTO NORTIA", "nom": "GMS Investissement", "int": 375000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Docteur Charlie Verbruggen", "int": 100000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "FAS LOMBARD", "nom": "Muriel SANCHEZ", "int": 25000, "vf": "OUI", "vr": 25000, "dv": "10/03/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "CTO NORTIA", "nom": "LMR Finances", "int": 25000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "SCI AGR4", "int": 25000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Jean-Luc HOEPFFNER", "int": 25000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}]}, {"isin": "FR1459ABB811", "nom": "TEMPO DEGRESSIF TOTALENERGIES 3,06 EUR MARS 2026", "strike": "27/03/2026", "month": "Mars 2026", "partenaire": "NEXO", "coupon": 0.1, "objectif": 200000, "tot_env": 200000, "tot_int": 209000, "tot_verse": 91000, "tot_valide": 91000, "uf": "4%", "clients": [{"ct": "ASV GENERALI", "nom": "Jean-Luc HUYGHE", "int": 60000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Philippe PEYRAT", "int": 20000, "vf": "OUI", "vr": 20000, "dv": "25/02/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "ASV GENERALI", "nom": "François-Marie LAHAYE (780)", "int": 20000, "vf": "OUI", "vr": 20000, "dv": "25/02/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Margaux LESCURE", "int": 10000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Benjmain ECHALIER", "int": 9000, "vf": "OUI", "vr": 9000, "dv": "26/02/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Charles AUSSUDRE", "int": 7000, "vf": "OUI", "vr": 7000, "dv": "24/02/2026", "de": "OUI", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Steve MOERDYK", "int": 14000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Jean-Luc HOEPFFNER", "int": 15000, "vf": "OUI", "vr": 10000, "dv": "26/02/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Jean ROUFFILANGE (742)", "int": 14000, "vf": "OUI", "vr": 10000, "dv": "26/02/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Elise DARRIGADE", "int": 15000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Florent GRAS", "int": 3000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Pierre LAZARE", "int": 3000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Margaux DEWINTER", "int": 5000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Charlie VERBRUGGEN", "int": 14000, "vf": "OUI", "vr": 15000, "dv": "06/03/2026", "de": "OUI", "ds": "OUI", "fk": ""}]}, {"isin": "FR1459ABC009", "nom": "TEMPO PHOENIX TRIMESTRIEL CREDIT AGRICOLE D 1.10 MARS 2026", "strike": "30/03/2026", "month": "Mars 2026", "partenaire": "NEXO", "coupon": 0.1, "objectif": 200000, "tot_env": 200000, "tot_int": 210000, "tot_verse": 58000, "tot_valide": 58000, "uf": "4,7%", "clients": [{"ct": "ASV GENERALI", "nom": "Jean-Luc HUYGHE", "int": 60000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Philippe PEYRAT", "int": 20000, "vf": "OUI", "vr": 20000, "dv": "25/02/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "ASV GENERALI", "nom": "François-Marie LAHAYE (780)", "int": 11000, "vf": "OUI", "vr": 11000, "dv": "25/02/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Margaux LESCURE", "int": 10000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Benjmain ECHALIER", "int": 0, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Charles AUSSUDRE", "int": 7000, "vf": "OUI", "vr": 7000, "dv": "24/02/2026", "de": "OUI", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Steve MOERDYK", "int": 14000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Jean-Luc HOEPFFNER", "int": 15000, "vf": "OUI", "vr": 10000, "dv": "26/02/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Quentin DUFOUR", "int": 5000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Elise DARRIGADE", "int": 20000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Julien GAYON", "int": 8000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Claude ROUFFILANGE", "int": 15000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Alexandre GHIZZARDI (937)", "int": 15000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "PER PANTHEA", "nom": "Jean ROUFFILANGE (225)", "int": 10000, "vf": "OUI", "vr": 10000, "dv": "26/02/2026", "de": "OUI", "ds": "OUI", "fk": ""}]}, {"isin": "XS3156897673", "nom": "NexAutocall Alexa Rendement Total Decrement 3.40 Mars 2026", "strike": "31/03/2026", "month": "Mars 2026", "partenaire": "NEXO", "coupon": 0.11, "objectif": 650000, "tot_env": 650000, "tot_int": 650000, "tot_verse": 155000, "tot_valide": 155000, "uf": "4%", "clients": [{"ct": "CTO NORTIA", "nom": "TRESCO", "int": 150000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "FAS LOMBARD", "nom": "Muriel SANCHEZ", "int": 60000, "vf": "OUI", "vr": 60000, "dv": "10/03/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "CTO NORTIA", "nom": "LMR Finances", "int": 100000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Nathalie BOUDEY", "int": 95000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Jean-Luc HUYGHE", "int": 50000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Alain PAYET", "int": 50000, "vf": "OUI", "vr": 50000, "dv": "09/03/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "CTO NORTIA", "nom": "André REGLAT", "int": 10000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Pierre LASCAR", "int": 25000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Pierre-Edouard BROCHET", "int": 30000, "vf": "OUI", "vr": 30000, "dv": "09/03/2026", "de": "OUI", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "AZUR MARKETING", "int": 15000, "vf": "OUI", "vr": 15000, "dv": "10/03/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Christophe WECK", "int": 30000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Pascale PROTAT", "int": 20000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "LAUSIN Odile", "int": 15000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}]}, {"isin": "XS3256123806", "nom": "NexAutocall Alexa Rendement Gecina Decrement 5.30 EUR Mars 2026", "strike": "31/03/2026", "month": "Mars 2026", "partenaire": "NEXO", "coupon": 0.115, "objectif": 500000, "tot_env": 500000, "tot_int": 500000, "tot_verse": 80000, "tot_valide": 80000, "uf": "4,5%", "clients": [{"ct": "CTO NORTIA", "nom": "TRESCO", "int": 150000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "FAS LOMBARD", "nom": "Muriel SANCHEZ", "int": 30000, "vf": "OUI", "vr": 30000, "dv": "10/03/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "FAS LOMBARD", "nom": "Sophie MONTEIL", "int": 145000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "SCI AGR4", "int": 75000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Franck DUPOUY", "int": 50000, "vf": "OUI", "vr": 50000, "dv": "26/02/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Romain PAYET", "int": 50000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}]}, {"isin": "TBD", "nom": "NexAutocall Alexa Rendement Crédit Agricole Decrement 1.10 EUR Mars 2026", "strike": "31/03/2026", "month": "Mars 2026", "partenaire": "NEXO", "coupon": 0.14, "objectif": 500000, "tot_env": 500000, "tot_int": 500000, "tot_verse": 0, "tot_valide": 0, "uf": "2%", "clients": [{"ct": "CTO NORTIA", "nom": "HELIOS", "int": 250000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "HORIZON", "int": 250000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}]}, {"isin": "TBD", "nom": "Bouygues Capriona", "strike": "17/03/2026", "month": "Mars 2026", "partenaire": "NEXO", "coupon": 0.109, "objectif": 1000000, "tot_env": 1000000, "tot_int": 1000000, "tot_verse": 0, "tot_valide": 0, "uf": "3,5%", "clients": [{"ct": "CTO NORTIA", "nom": "CAPRIONA", "int": 1000000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}]}, {"isin": "FRIP00002CS5", "nom": "NexAutocall Alexa Rendement Crédit Agricole Decrement 1.10 Avril 2026", "strike": "15/04/2026", "month": "Avril 2026", "partenaire": "NEXO", "coupon": 0.121, "objectif": 1000000, "tot_env": 1000000, "tot_int": 0, "tot_verse": 0, "tot_valide": 0, "uf": "4,6%", "clients": []}, {"isin": "TBD", "nom": "Carrefour Mai 2026", "strike": "29/05/2026", "month": "Mai 2026", "partenaire": "NEXO", "coupon": 0.12, "objectif": 500000, "tot_env": 500000, "tot_int": 0, "tot_verse": 0, "tot_valide": 0, "uf": "5%", "clients": []}];
+const ENVELOPES=[{"isin": "XS3033811632", "nom": "NexAutocall Alexa Copper Mining Février 2026", "strike": "27/02/2026", "month": "Février 2026", "partenaire": "NEXO", "coupon": 0.113, "objectif": 542000, "tot_env": 522000, "tot_int": 525000, "tot_verse": 522000, "tot_valide": 522000, "uf": "", "clients": [{"ct": "CTO NORTIA", "nom": "DR Charlie Verbruggen", "int": 25000, "vf": "OUI", "vr": 25000, "dv": "26/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "CTO NORTIA", "nom": "TRESCO", "int": 100000, "vf": "OUI", "vr": 100000, "dv": "26/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "CTO NORTIA", "nom": "Sanchez Muriel", "int": 13000, "vf": "OUI", "vr": 13000, "dv": "26/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "FAS LOMBARD", "nom": "Sophie Monteil", "int": 150000, "vf": "OUI", "vr": 150000, "dv": "19/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "CTO NORTIA", "nom": "SCI AGR4", "int": 70000, "vf": "OUI", "vr": 70000, "dv": "23/02/2026", "de": "OUI", "ds": "", "fk": "OUI"}, {"ct": "CTO NORTIA", "nom": "Franck Dupouy", "int": 50000, "vf": "OUI", "vr": 50000, "dv": "26/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "CTO NORTIA", "nom": "Romain Payet", "int": 50000, "vf": "OUI", "vr": 50000, "dv": "20/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "CTO NORTIA", "nom": "Alexandre Ghizzardi", "int": 17000, "vf": "OUI", "vr": 14000, "dv": "26/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "CTO NORTIA", "nom": "Alter Ego Holding", "int": 50000, "vf": "OUI", "vr": 50000, "dv": "20/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}]}, {"isin": "XS3156906847", "nom": "NexAutocall Alexa Rendement Total Decrement 3.40 Fevrier 2026", "strike": "27/02/2026", "month": "Février 2026", "partenaire": "NEXO", "coupon": 0.11, "objectif": 500000, "tot_env": 475000, "tot_int": 475000, "tot_verse": 485000, "tot_valide": 485000, "uf": "", "clients": [{"ct": "CTO NORTIA", "nom": "GMS Investissement", "int": 365000, "vf": "OUI", "vr": 375000, "dv": "26/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "FAS LOMBARD", "nom": "Laurent Réglat", "int": 50000, "vf": "OUI", "vr": 50000, "dv": "25/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "CTO NORTIA", "nom": "Romain Payet", "int": 50000, "vf": "OUI", "vr": 50000, "dv": "20/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "CTO NORTIA", "nom": "SEL DR GUEMMAR", "int": 10000, "vf": "OUI", "vr": 10000, "dv": "17/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}]}, {"isin": "XS3256119440", "nom": "NEXAUTOCALL ALEXA EDENRED DECREMENT 1EUR FEVRIER 2026", "strike": "27/02/2026", "month": "Février 2026", "partenaire": "NEXO", "coupon": 0.18, "objectif": 560000, "tot_env": 485000, "tot_int": 485000, "tot_verse": 485000, "tot_valide": 485000, "uf": "", "clients": [{"ct": "CTO NORTIA", "nom": "GMS Investissement", "int": 400000, "vf": "OUI", "vr": 400000, "dv": "04/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "CTO NORTIA", "nom": "Frédéric Colombini", "int": 15000, "vf": "OUI", "vr": 15000, "dv": "04/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "CTO NORTIA", "nom": "SCI Kleber", "int": 20000, "vf": "OUI", "vr": 20000, "dv": "05/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "CTO NORTIA", "nom": "Alter Ego Holding", "int": 50000, "vf": "OUI", "vr": 50000, "dv": "20/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}]}, {"isin": "XS3256122584", "nom": "NexAutocall Alexa Rendement Edenred Decrement 1 EUR Février 2026", "strike": "27/02/2026", "month": "Février 2026", "partenaire": "NEXO", "coupon": 0.118, "objectif": 540000, "tot_env": 500000, "tot_int": 500000, "tot_verse": 480000, "tot_valide": 480000, "uf": "", "clients": [{"ct": "CTO NORTIA", "nom": "GMS Investissement", "int": 225000, "vf": "OUI", "vr": 200000, "dv": "13/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "FAS LOMBARD", "nom": "Laurent Réglat", "int": 55000, "vf": "OUI", "vr": 55000, "dv": "25/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "FAS LOMBARD", "nom": "Monteil Sophie", "int": 105000, "vf": "OUI", "vr": 105000, "dv": "17/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "CTO NORTIA", "nom": "Franck Dupouy", "int": 50000, "vf": "OUI", "vr": 50000, "dv": "26/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "CTO NORTIA", "nom": "Payet Romain", "int": 45000, "vf": "OUI", "vr": 45000, "dv": "23/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}, {"ct": "CTO NORTIA", "nom": "Alexandre Ghizzardi", "int": 20000, "vf": "OUI", "vr": 25000, "dv": "10/02/2026", "de": "OUI", "ds": "OUI", "fk": "OUI"}]}, {"isin": "FRIP000020O8", "nom": "NexAutocall Alexa Rendement Carrefour Decrement 0.87 EUR Mars 2026", "strike": "13/03/2026", "month": "Mars 2026", "partenaire": "NEXO", "coupon": 0.103, "objectif": 850000, "tot_env": 850000, "tot_int": 850000, "tot_verse": 453000, "tot_valide": 453000, "uf": "4,5%", "clients": [{"ct": "CTO NORTIA", "nom": "TRESCO", "int": 150000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "FAS LOMBARD", "nom": "Sophie MONTEIL", "int": 150000, "vf": "OUI", "vr": 150000, "dv": "17/02/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "CTO NORTIA", "nom": "LMR Finances", "int": 128000, "vf": "OUI", "vr": 128000, "dv": "10/03/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "CTO NORTIA", "nom": "SCI AGR4", "int": 25000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Nathalie BOUDEY", "int": 100000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Compagnie de Gestion d'Aquitaine", "int": 55000, "vf": "OUI", "vr": 55000, "dv": "10/03/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Jean-Luc HUYGHE", "int": 50000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Franck DUPOUY", "int": 20000, "vf": "OUI", "vr": 20000, "dv": "09/03/2026", "de": "OUI", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Alain PAYET", "int": 50000, "vf": "OUI", "vr": 50000, "dv": "09/03/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Romain PAYET", "int": 50000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Pierre THOUEILLES", "int": 12000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Pierre-Edouard BROCHET", "int": 30000, "vf": "OUI", "vr": 30000, "dv": "09/03/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "CTO NORTIA", "nom": "AZUR MARKETING", "int": 20000, "vf": "OUI", "vr": 20000, "dv": "10/03/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Christophe WECK", "int": 10000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}]}, {"isin": "XS3256117824", "nom": "NexAutocall Alexa Rendement Solvay Decrement 2.20 EUR Mars 2026", "strike": "16/03/2026", "month": "Mars 2026", "partenaire": "NEXO", "coupon": 0.1915, "objectif": 575000, "tot_env": 575000, "tot_int": 575000, "tot_verse": 25000, "tot_valide": 25000, "uf": "4,5%", "clients": [{"ct": "CTO NORTIA", "nom": "GMS Investissement", "int": 375000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Docteur Charlie Verbruggen", "int": 100000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "FAS LOMBARD", "nom": "Muriel SANCHEZ", "int": 25000, "vf": "OUI", "vr": 25000, "dv": "10/03/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "CTO NORTIA", "nom": "LMR Finances", "int": 25000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "SCI AGR4", "int": 25000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Jean-Luc HOEPFFNER", "int": 25000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}]}, {"isin": "FR1459ABB811", "nom": "TEMPO DEGRESSIF TOTALENERGIES 3,06 EUR MARS 2026", "strike": "27/03/2026", "month": "Mars 2026", "partenaire": "NEXO", "coupon": 0.1, "objectif": 200000, "tot_env": 200000, "tot_int": 209000, "tot_verse": 91000, "tot_valide": 91000, "uf": "4%", "clients": [{"ct": "ASV GENERALI", "nom": "Jean-Luc HUYGHE", "int": 60000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Philippe PEYRAT", "int": 20000, "vf": "OUI", "vr": 20000, "dv": "25/02/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "ASV GENERALI", "nom": "François-Marie LAHAYE (780)", "int": 20000, "vf": "OUI", "vr": 20000, "dv": "25/02/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Margaux LESCURE", "int": 10000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Benjmain ECHALIER", "int": 9000, "vf": "OUI", "vr": 9000, "dv": "26/02/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Charles AUSSUDRE", "int": 7000, "vf": "OUI", "vr": 7000, "dv": "24/02/2026", "de": "OUI", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Steve MOERDYK", "int": 14000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Jean-Luc HOEPFFNER", "int": 15000, "vf": "OUI", "vr": 10000, "dv": "26/02/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Jean ROUFFILANGE (742)", "int": 14000, "vf": "OUI", "vr": 10000, "dv": "26/02/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Elise DARRIGADE", "int": 15000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Florent GRAS", "int": 3000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Pierre LAZARE", "int": 3000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Margaux DEWINTER", "int": 5000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Charlie VERBRUGGEN", "int": 14000, "vf": "OUI", "vr": 15000, "dv": "06/03/2026", "de": "OUI", "ds": "OUI", "fk": ""}]}, {"isin": "FR1459ABC009", "nom": "TEMPO PHOENIX TRIMESTRIEL CREDIT AGRICOLE D 1.10 MARS 2026", "strike": "30/03/2026", "month": "Mars 2026", "partenaire": "NEXO", "coupon": 0.1, "objectif": 200000, "tot_env": 200000, "tot_int": 210000, "tot_verse": 58000, "tot_valide": 58000, "uf": "4,7%", "clients": [{"ct": "ASV GENERALI", "nom": "Jean-Luc HUYGHE", "int": 60000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Philippe PEYRAT", "int": 20000, "vf": "OUI", "vr": 20000, "dv": "25/02/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "ASV GENERALI", "nom": "François-Marie LAHAYE (780)", "int": 11000, "vf": "OUI", "vr": 11000, "dv": "25/02/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Margaux LESCURE", "int": 10000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Benjmain ECHALIER", "int": 0, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Charles AUSSUDRE", "int": 7000, "vf": "OUI", "vr": 7000, "dv": "24/02/2026", "de": "OUI", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Steve MOERDYK", "int": 14000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Jean-Luc HOEPFFNER", "int": 15000, "vf": "OUI", "vr": 10000, "dv": "26/02/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Quentin DUFOUR", "int": 5000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Elise DARRIGADE", "int": 20000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Julien GAYON", "int": 8000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Claude ROUFFILANGE", "int": 15000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "ASV GENERALI", "nom": "Alexandre GHIZZARDI (937)", "int": 15000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "PER PANTHEA", "nom": "Jean ROUFFILANGE (225)", "int": 10000, "vf": "OUI", "vr": 10000, "dv": "26/02/2026", "de": "OUI", "ds": "OUI", "fk": ""}]}, {"isin": "XS3156897673", "nom": "NexAutocall Alexa Rendement Total Decrement 3.40 Mars 2026", "strike": "31/03/2026", "month": "Mars 2026", "partenaire": "NEXO", "coupon": 0.11, "objectif": 650000, "tot_env": 650000, "tot_int": 650000, "tot_verse": 155000, "tot_valide": 155000, "uf": "4%", "clients": [{"ct": "CTO NORTIA", "nom": "TRESCO", "int": 150000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "FAS LOMBARD", "nom": "Muriel SANCHEZ", "int": 60000, "vf": "OUI", "vr": 60000, "dv": "10/03/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "CTO NORTIA", "nom": "LMR Finances", "int": 100000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Nathalie BOUDEY", "int": 95000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Jean-Luc HUYGHE", "int": 50000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Alain PAYET", "int": 50000, "vf": "OUI", "vr": 50000, "dv": "09/03/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "CTO NORTIA", "nom": "André REGLAT", "int": 10000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Pierre LASCAR", "int": 25000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Pierre-Edouard BROCHET", "int": 30000, "vf": "OUI", "vr": 30000, "dv": "09/03/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "CTO NORTIA", "nom": "AZUR MARKETING", "int": 15000, "vf": "OUI", "vr": 15000, "dv": "10/03/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Christophe WECK", "int": 30000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Pascale PROTAT", "int": 20000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "LAUSIN Odile", "int": 15000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}]}, {"isin": "XS3256123806", "nom": "NexAutocall Alexa Rendement Gecina Decrement 5.30 EUR Mars 2026", "strike": "31/03/2026", "month": "Mars 2026", "partenaire": "NEXO", "coupon": 0.115, "objectif": 500000, "tot_env": 500000, "tot_int": 500000, "tot_verse": 80000, "tot_valide": 80000, "uf": "4,5%", "clients": [{"ct": "CTO NORTIA", "nom": "TRESCO", "int": 150000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "FAS LOMBARD", "nom": "Muriel SANCHEZ", "int": 30000, "vf": "OUI", "vr": 30000, "dv": "10/03/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "FAS LOMBARD", "nom": "Sophie MONTEIL", "int": 145000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "SCI AGR4", "int": 75000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Franck DUPOUY", "int": 50000, "vf": "OUI", "vr": 50000, "dv": "26/02/2026", "de": "OUI", "ds": "OUI", "fk": ""}, {"ct": "CTO NORTIA", "nom": "Romain PAYET", "int": 50000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}]}, {"isin": "FR0014016ZQ3", "nom": "NexAutocall Alexa Rendement Crédit Agricole Decrement 1.10 EUR Mars 2026", "strike": "31/03/2026", "month": "Mars 2026", "partenaire": "NEXO", "coupon": 0.14, "objectif": 500000, "tot_env": 500000, "tot_int": 500000, "tot_verse": 0, "tot_valide": 0, "uf": "2%", "clients": [{"ct": "CTO NORTIA", "nom": "HELIOS", "int": 250000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}, {"ct": "CTO NORTIA", "nom": "HORIZON", "int": 250000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}]}, {"isin": "TBD", "nom": "Bouygues Capriona", "strike": "17/03/2026", "month": "Mars 2026", "partenaire": "NEXO", "coupon": 0.109, "objectif": 1000000, "tot_env": 1000000, "tot_int": 1000000, "tot_verse": 0, "tot_valide": 0, "uf": "3,5%", "clients": [{"ct": "CTO NORTIA", "nom": "CAPRIONA", "int": 1000000, "vf": "", "vr": 0, "dv": "", "de": "", "ds": "", "fk": ""}]}, {"isin": "FRIP00002CS5", "nom": "NexAutocall Alexa Rendement Crédit Agricole Decrement 1.10 Avril 2026", "strike": "15/04/2026", "month": "Avril 2026", "partenaire": "NEXO", "coupon": 0.121, "objectif": 1000000, "tot_env": 1000000, "tot_int": 0, "tot_verse": 0, "tot_valide": 0, "uf": "4,6%", "clients": []}, {"isin": "TBD", "nom": "Carrefour Mai 2026", "strike": "29/05/2026", "month": "Mai 2026", "partenaire": "NEXO", "coupon": 0.12, "objectif": 500000, "tot_env": 500000, "tot_int": 0, "tot_verse": 0, "tot_valide": 0, "uf": "5%", "clients": []}];
 
 // ── helpers ────────────────────────────────────────────────────────────────
 const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -1246,12 +1275,13 @@ document.querySelectorAll('.nb').forEach(b=>b.addEventListener('click',()=>{
   const t=b.dataset.tab;
   document.querySelectorAll('.tab').forEach(p=>p.classList.remove('active'));
   document.getElementById('tab-'+t).classList.add('active');
-  document.getElementById('pgT').textContent={dashboard:'Dashboard',produits:'Produits',expo:'Expo Clients',clients:'Clients',enveloppes:'Enveloppes',cashdispo:'Cash Dispo'}[t]||t;
+  document.getElementById('pgT').textContent={dashboard:'Dashboard',produits:'Produits',expo:'Expo Clients',clients:'Clients',enveloppes:'Enveloppes',cashdispo:'Cash Dispo',cashflow:'Cash Flow'}[t]||t;
   if(t==='dashboard') renderDashboard();
   if(t==='expo'&&!eInit)initExpo();
   if(t==='clients'&&!cInit)initClients();
   if(t==='enveloppes'&&!envInit)initEnv();
   if(t==='cashdispo'&&!cdInit)initCD();
+  if(t==='cashflow'&&!cfInit)initCF();
 }));
 let sbC=false;
 document.getElementById('colBtn').addEventListener('click',()=>{
@@ -2502,6 +2532,252 @@ function renderCDTable(){
   }).join('');
 
   document.getElementById('tbCD').innerHTML = dataHtml + totalHtml + specialHtml;
+}
+
+// ── CASH FLOW ──────────────────────────────────────────────────────────────
+const CF_REF = new Date('2026-03-10');
+let cfInit=false, cfSelectedMonth=null, cfSelectedProd=null;
+let CF_EVENTS=[], CF_AGG={};
+
+function parseDsCF(ds){
+  if(!ds||typeof ds!=='string')return null;
+  const p=ds.split('/');if(p.length!==3)return null;
+  const d=new Date(+p[2],+p[1]-1,+p[0]);return isNaN(d.getTime())?null:d;
+}
+function cfAddDays(d,n){const r=new Date(d);r.setDate(r.getDate()+n);return r;}
+function cfMK(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+function cfML(k){
+  const mo=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+  const [y,m]=k.split('-');return mo[+m-1]+' '+y;
+}
+
+function cfGenEvents(){
+  const evts=[];
+  const pasMap={};
+  CLIENTS.forEach(c=>{
+    const k=c.client.trim().toUpperCase();
+    if(!(k in pasMap))pasMap[k]=c.pas||0;
+  });
+  const prods=PRODUITS.filter(r=>r.t===1&&r.exit!=='EXIT');
+  prods.forEach(prod=>{
+    const start=parseDsCF(prod.ds);if(!start)return;
+    const drVal=prod.dr||0;if(drVal<=0)return;
+    const maturity=new Date(CF_REF.getTime()+drVal*365.25*24*3600*1000);
+    const totalYears=(maturity-start)/(365.25*24*3600*1000);
+    const cli=PRODUITS.filter(r=>r.t===0&&r.pi===prod.i);
+    cli.forEach(c=>{
+      const enc=c.enc||0;if(!enc)return;
+      const pas=pasMap[c.nom.trim().toUpperCase()]||0;
+      const tx=prod.tx||0;
+      if(prod.cp==='TRIMESTRIELS'){
+        let obs=new Date(start);obs.setMonth(obs.getMonth()+3);
+        while(obs<=maturity){
+          const payD=cfAddDays(obs,7);const g=enc*tx/4;
+          evts.push({date:payD,prod:prod.nom,prodId:prod.i,isin:prod.isin,client:c.nom,ct:c.ct,gross:g,net:g*(1-pas),type:'coupon'});
+          obs=new Date(obs);obs.setMonth(obs.getMonth()+3);
+        }
+      } else if(prod.cp==='ANNUELS'){
+        let obs=new Date(start);obs.setFullYear(obs.getFullYear()+1);
+        while(obs<=maturity){
+          const payD=cfAddDays(obs,7);const g=enc*tx;
+          evts.push({date:payD,prod:prod.nom,prodId:prod.i,isin:prod.isin,client:c.nom,ct:c.ct,gross:g,net:g*(1-pas),type:'coupon'});
+          obs=new Date(obs);obs.setFullYear(obs.getFullYear()+1);
+        }
+      } else if(prod.cp==='RAPPEL'){
+        const payD=cfAddDays(maturity,7);const g=enc*tx*totalYears;
+        evts.push({date:payD,prod:prod.nom,prodId:prod.i,isin:prod.isin,client:c.nom,ct:c.ct,gross:g,net:g*(1-pas),type:'coupon'});
+      }
+      evts.push({date:cfAddDays(maturity,7),prod:prod.nom,prodId:prod.i,isin:prod.isin,client:c.nom,ct:c.ct,gross:enc,net:enc,type:'nominal'});
+    });
+  });
+  return evts.sort((a,b)=>a.date-b.date);
+}
+
+function cfBuildAgg(){
+  const now=new Date();
+  const startM=new Date(now.getFullYear(),now.getMonth(),1);
+  const endM=new Date(startM);endM.setMonth(endM.getMonth()+13);
+  const months=[];
+  let cur=new Date(startM);
+  while(cur<endM){months.push(cfMK(cur));cur=new Date(cur);cur.setMonth(cur.getMonth()+1);}
+  const agg={};
+  months.forEach(m=>{agg[m]={coupon:0,nominal:0,evts:[]};});
+  CF_EVENTS.forEach(e=>{
+    const mk=cfMK(e.date);if(!agg[mk])return;
+    agg[mk].evts.push(e);
+    if(e.type==='coupon')agg[mk].coupon+=e.net;
+    else agg[mk].nominal+=e.net;
+  });
+  return {months,agg};
+}
+
+function initCF(){
+  cfInit=true;
+  CF_EVENTS=cfGenEvents();
+  const {months,agg}=cfBuildAgg();
+  CF_AGG={months,agg};
+  renderCF();
+}
+
+function renderCF(){
+  const {months,agg}=CF_AGG;
+  const labels=months.map(cfML);
+  const couponData=months.map(m=>Math.round(agg[m].coupon)||null);
+  const nominalData=months.map(m=>Math.round(agg[m].nominal)||null);
+
+  const ex=Chart.getChart('cfChart');if(ex)ex.destroy();
+  new Chart(document.getElementById('cfChart'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Coupons nets',data:couponData,backgroundColor:'#3b82f6',stack:'s',borderRadius:3},
+      {label:'Remb. nominal',data:nominalData,backgroundColor:'#16a34a',stack:'s',borderRadius:3},
+    ]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'top',labels:{font:{size:11},boxWidth:12,padding:12}},
+        tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+Math.round(ctx.raw||0).toLocaleString('fr-FR')+' €'}},
+        datalabels:{display:false}
+      },
+      scales:{
+        x:{stacked:true,grid:{display:false},ticks:{font:{size:10},maxRotation:45}},
+        y:{stacked:true,ticks:{callback:v=>v>=1000000?(v/1000000).toFixed(1)+'M €':Math.round(v/1000)+'k €',font:{size:10}},grid:{color:'#f3f4f6'}}
+      },
+      onClick:(evt,elements)=>{
+        if(!elements.length)return;
+        const mk=months[elements[0].index];
+        cfSelectedMonth=mk;cfSelectedProd=null;
+        renderCFPanel(mk);
+        // Reset bottom table
+        document.getElementById('cf-table-title').textContent='Sélectionner un produit ci-dessus';
+        document.getElementById('cf-table-sb').innerHTML='';
+        document.getElementById('thCF').innerHTML='';
+        document.getElementById('tbCF').innerHTML='<tr><td colspan="5" style="text-align:center;color:#9ca3af;padding:20px;font-size:12px">Cliquer sur un produit dans le panneau de droite</td></tr>';
+      }
+    }
+  });
+
+  // Inline summary in chart title
+  const now=new Date();
+  const curMK=cfMK(now);
+  const startM=new Date(now.getFullYear(),now.getMonth(),1);
+  const curCoupons=CF_EVENTS.filter(e=>cfMK(e.date)===curMK&&e.type==='coupon').reduce((s,e)=>s+e.net,0);
+  const n12end=new Date(startM);n12end.setMonth(n12end.getMonth()+12);
+  const p12=CF_EVENTS.filter(e=>e.date>=startM&&e.date<n12end&&e.type==='coupon').reduce((s,e)=>s+e.net,0);
+  const totNom=CF_EVENTS.filter(e=>e.type==='nominal').reduce((s,e)=>s+e.gross,0);
+  const fmtK=v=>Math.abs(v)>=1000000?(v/1000000).toFixed(1)+'M €':Math.round(v/1000)+'k €';
+  const kpiEl=document.getElementById('cf-kpi-inline');
+  if(kpiEl)kpiEl.innerHTML=`Ce mois: <b style="color:#2563eb">${fmtK(curCoupons)}</b> · 12m: <b style="color:#16a34a">${fmtK(p12)}</b> · Nominal futur: <b style="color:#d97706">${fmtK(totNom)}</b>`;
+}
+
+function renderCFPanel(mk){
+  document.getElementById('cf-panel-hd').textContent='📅 '+cfML(mk);
+  const body=document.getElementById('cf-panel-body');
+  const evts=(CF_AGG.agg[mk]||{evts:[]}).evts;
+  if(!evts.length){body.innerHTML='<div style="padding:20px;text-align:center;color:#9ca3af;font-size:12px">Aucun événement</div>';return;}
+
+  // Group by prodId to keep ISIN
+  const prodMap={};
+  evts.forEach(e=>{
+    if(!prodMap[e.prodId])prodMap[e.prodId]={nom:e.prod,isin:e.isin||'',couponNet:0,nominal:0,nCli:new Set()};
+    const pm=prodMap[e.prodId];
+    if(e.type==='coupon')pm.couponNet+=e.net;
+    else pm.nominal+=e.gross;
+    pm.nCli.add(e.client);
+  });
+
+  const prodList=Object.entries(prodMap); // [[prodId, pm], ...]
+  const fK=v=>Math.abs(v)>=1000000?(v/1000000).toFixed(1)+'M':Math.round(v/1000)+'k';
+  let panelHtml='';
+  prodList.forEach(([pid,pm],idx)=>{
+    const isActive=cfSelectedProd===pm.nom;
+    panelHtml+=`<div class="cf-prod-row" data-pidx="${idx}"
+      style="display:flex;justify-content:space-between;align-items:flex-start;padding:8px 12px;cursor:pointer;border-bottom:1px solid #f3f4f6;${isActive?'background:#eff6ff;border-left:3px solid #2563eb;':'border-left:3px solid transparent;'}transition:background .12s">
+      <div style="flex:1;min-width:0;margin-right:8px">
+        <div style="font-size:11px;font-weight:${isActive?'700':'600'};color:${isActive?'#1d4ed8':'#1e3a5f'};line-height:1.4;word-break:break-word">${esc(pm.nom)}</div>
+        <div style="font-size:10px;color:#7c3aed;font-weight:600;margin-top:2px;font-family:monospace">${esc(pm.isin)}</div>
+        <div style="font-size:10px;color:#6b7280;margin-top:1px">${pm.nCli.size} client${pm.nCli.size>1?'s':''}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:12px;font-weight:700;color:#2563eb">${fK(pm.couponNet)} €</div>
+        ${pm.nominal>0?`<div style="font-size:10px;color:#16a34a;font-weight:600">+${fK(pm.nominal)} nom.</div>`:''}
+      </div>
+    </div>`;
+  });
+  body.innerHTML=panelHtml;
+  // Attach click listeners via data-attribute (avoids HTML injection issues)
+  body.querySelectorAll('.cf-prod-row').forEach(el=>{
+    el.addEventListener('click',()=>{
+      const pm=prodList[+el.dataset.pidx][1];
+      cfSelectProd(pm.nom);
+    });
+  });
+}
+
+function cfSelectProd(pname){
+  cfSelectedProd=pname;
+  // Re-render panel to highlight selected
+  renderCFPanel(cfSelectedMonth);
+  // Render clients in bottom table
+  const evts=(CF_AGG.agg[cfSelectedMonth]||{evts:[]}).evts.filter(e=>e.prod===pname);
+
+  // Summary bar
+  const totalNet=evts.filter(e=>e.type==='coupon').reduce((s,e)=>s+e.net,0);
+  const totalGross=evts.filter(e=>e.type==='coupon').reduce((s,e)=>s+e.gross,0);
+  const totalNom=evts.filter(e=>e.type==='nominal').reduce((s,e)=>s+e.gross,0);
+  const fmtE=v=>Math.round(v).toLocaleString('fr-FR')+' €';
+  document.getElementById('cf-table-title').textContent=pname;
+  document.getElementById('cf-table-sb').innerHTML=
+    `<span>${evts.filter(e=>e.type==='coupon').length} coupon${evts.filter(e=>e.type==='coupon').length>1?'s':''}</span>`+
+    ` — Brut: <span>${fmtE(totalGross)}</span>`+
+    ` — Net: <span style="color:#2563eb;font-weight:700">${fmtE(totalNet)}</span>`+
+    (totalNom>0?` — Nominal: <span style="color:#16a34a;font-weight:700">${fmtE(totalNom)}</span>`:'');
+
+  document.getElementById('thCF').innerHTML=`<tr>
+    <th style="min-width:170px">Client</th>
+    <th>Contrat</th>
+    <th>Type</th>
+    <th class="nr">Date paiement</th>
+    <th class="nr">Brut</th>
+    <th class="nr" style="color:#2563eb">Net (après PaS)</th>
+  </tr>`;
+
+  // Group by client for the table
+  const cliMap={};
+  evts.forEach(e=>{
+    const k=e.client+'||'+e.ct;
+    if(!cliMap[k])cliMap[k]={client:e.client,ct:e.ct,couponGross:0,couponNet:0,nominal:0,date:null};
+    const cm=cliMap[k];
+    if(e.type==='coupon'){cm.couponGross+=e.gross;cm.couponNet+=e.net;if(!cm.date)cm.date=e.date;}
+    else cm.nominal+=e.gross;
+  });
+
+  let html='';
+  Object.values(cliMap).forEach(cm=>{
+    const hasCoupon=cm.couponNet>0;
+    const hasNom=cm.nominal>0;
+    if(hasCoupon){
+      html+=`<tr>
+        <td style="font-weight:500">${esc(cm.client)}</td>
+        <td style="font-size:11px;color:#6b7280">${esc(cm.ct)}</td>
+        <td><span style="background:#dbeafe;color:#1e40af;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:700">COUPON</span></td>
+        <td class="nr" style="font-size:11px;color:#6b7280">${cm.date?cm.date.toLocaleDateString('fr-FR'):'—'}</td>
+        <td class="nr">${Math.round(cm.couponGross).toLocaleString('fr-FR')} €</td>
+        <td class="nr" style="color:#2563eb;font-weight:600">${Math.round(cm.couponNet).toLocaleString('fr-FR')} €</td>
+      </tr>`;
+    }
+    if(hasNom){
+      html+=`<tr>
+        <td style="font-weight:500;color:#166534">${esc(cm.client)}</td>
+        <td style="font-size:11px;color:#6b7280">${esc(cm.ct)}</td>
+        <td><span style="background:#dcfce7;color:#166534;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:700">NOMINAL</span></td>
+        <td class="nr" style="font-size:11px;color:#6b7280">—</td>
+        <td class="nr" style="color:#166534">${Math.round(cm.nominal).toLocaleString('fr-FR')} €</td>
+        <td class="nr" style="color:#166534">${Math.round(cm.nominal).toLocaleString('fr-FR')} €</td>
+      </tr>`;
+    }
+  });
+  document.getElementById('tbCF').innerHTML=html||'<tr><td colspan="6" style="text-align:center;color:#9ca3af;padding:20px">Aucun client</td></tr>';
 }
 
 
