@@ -14,7 +14,10 @@
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--txt);height:100vh;overflow:hidden;font-size:13px}
 #app{display:flex;height:100vh}
 .sb{width:210px;min-width:210px;background:var(--sb);border-right:1px solid var(--sbb);display:flex;flex-direction:column;overflow:hidden;transition:width .2s}
-.sb.col{width:52px;min-width:52px}
+.sb.col{width:52px;min-width:52px;overflow:hidden}
+.sb.col .nb span:not(.nb-ic),.sb.col #colLbl{display:none}
+.sb.col .nb{justify-content:center;padding:9px 0}
+.sb.col .col-btn{justify-content:center;padding:9px 0}
 .sb-hd{padding:15px 12px;border-bottom:1px solid var(--sbb);display:flex;align-items:center;gap:9px;white-space:nowrap;overflow:hidden}
 .logo{width:30px;height:30px;background:linear-gradient(135deg,#2563eb,#7c3aed);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff;flex-shrink:0}
 .logo-t{font-weight:700;font-size:14px;color:#fff;white-space:nowrap}
