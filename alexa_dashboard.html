@@ -1603,7 +1603,7 @@ document.getElementById('btnCol').addEventListener('click',()=>{document.querySe
 function fprod(){
   return PRODUITS.filter(r=>{
     if(r.t!==1) return false;
-    if(pSearch&&!r.nom.toLowerCase().includes(pSearch)) return false;
+    if(pSearch&&!r.nom.toLowerCase().includes(pSearch)&&!(r.isin||'').toLowerCase().includes(pSearch)) return false;
     if(pSJs.size>0&&!pSJs.has(r.sj)) return false;
     if(pSecs.size>0&&!pSecs.has(r.sec)) return false;
     if(pBk&&r.bk!==pBk) return false;
