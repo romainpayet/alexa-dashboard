@@ -2003,7 +2003,7 @@ function renderEnvMonthTabs(){
 function renderEnvMonthKpis(){
   const ef=envFiltered().map(({e})=>e);
   const totObj=ef.reduce((s,e)=>s+e.objectif,0);
-  const totVerse=ef.reduce((s,e)=>s+e.tot_verse,0);
+  const totVerse=ef.reduce((s,e)=>s+e.clients.reduce((sv,c)=>sv+(Number(c.vr)||0),0),0);
   const totInt=ef.reduce((s,e)=>s+e.tot_int,0);
   const nClients=ef.reduce((s,e)=>s+e.clients.length,0);
   const kpi=(label,val,col)=>`<div style="background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:5px 12px;display:flex;align-items:center;gap:8px">
@@ -2047,11 +2047,12 @@ function renderEnvCards(){
   const wrap=document.getElementById('env-cards');
   const filtered=envFiltered();
   wrap.innerHTML=filtered.map(({e,i})=>{
-    const pctV   = e.objectif>0 ? Math.min(100,Math.round(e.tot_verse/e.objectif*100)) : 0;
+    const realVerse = e.clients.reduce((s,c)=>s+(Number(c.vr)||0),0);
+    const pctV   = e.objectif>0 ? Math.min(100,Math.round(realVerse/e.objectif*100)) : 0;
     const couponStr = e.coupon>0 ? (e.coupon*100).toFixed(2).replace('.',',')+'%' : '—';
     const selected = i===envSel;
     const shortNom = e.nom.length>42 ? e.nom.slice(0,42)+'…' : e.nom;
-    const remaining = Math.max(0, e.objectif - e.tot_verse);
+    const remaining = Math.max(0, e.objectif - realVerse);
     const borderCol = selected?'#2563eb':'#d9dde3';
     const shadowCol = selected?'0 0 0 3px rgba(37,99,235,.15)':'0 1px 3px rgba(0,0,0,.05)';
     const bgCol = selected?'#f0f6ff':'#fff';
@@ -2068,7 +2069,7 @@ function renderEnvCards(){
       </div>
       <div style="display:flex;justify-content:space-between;font-size:9.5px;margin-bottom:3px">
         <span style="color:#374151">Obj: <strong>${Math.round(e.objectif/1000)}k €</strong></span>
-        <span style="color:#16a34a">Versé: <strong>${Math.round(e.tot_verse/1000)}k €</strong>
+        <span style="color:#16a34a">Versé: <strong>${Math.round(realVerse/1000)}k €</strong>
           ${remaining>0?`<span style="color:#dc2626"> (reste ${Math.round(remaining/1000)}k)</span>`:'<span style="color:#16a34a"> ✓</span>'}</span>
       </div>
       <div style="background:#e5e7eb;border-radius:3px;height:5px;overflow:hidden">
@@ -2097,7 +2098,7 @@ function renderEnvDetail(){
   const totIntF = fc.reduce((s,c)=>s+c.int,0);
   const totVerseF = fc.reduce((s,c)=>s+c.vr,0);
   const ufBadge = e.uf ? `<span style="margin-left:14px;padding:2px 8px;font-size:11px;font-weight:700;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:4px">UF : ${esc(e.uf)}</span>` : '';
-  document.getElementById('sbEnv').innerHTML=`<span>${fc.length}</span> clients — Intentions: <span>${Math.round(e.tot_int).toLocaleString('fr-FR')} €</span> — Versé réel: <span>${Math.round(e.tot_verse).toLocaleString('fr-FR')} €</span> — Validé: <span>${Math.round(e.tot_valide).toLocaleString('fr-FR')} €</span>${ufBadge}`;
+  document.getElementById('sbEnv').innerHTML=`<span>${fc.length}</span> clients — Intentions: <span>${Math.round(totIntF).toLocaleString('fr-FR')} €</span> — Versé réel: <span>${Math.round(totVerseF).toLocaleString('fr-FR')} €</span> — Validé: <span>${Math.round(totVerseF).toLocaleString('fr-FR')} €</span>${ufBadge}`;
   document.getElementById('tbEnv').innerHTML=fc.map(c=>{
     const isVerse = c.vf==='OUI';
     const rowBg = isVerse ? 'background:#f0fdf4' : '';
