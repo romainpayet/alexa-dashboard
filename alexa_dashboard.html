@@ -3141,6 +3141,7 @@ function patchCDCTO() {
     if (cpt === 93100154601) row[22] =  -13000; // THOUEILLES Pierre
     if (cpt === 93100298301) row[22] =  -40000; // PAYET Laura
     if (String(cpt||'').trim() === 'WLC')   row[22] = -50000; // WLC
+    if (cpt === 92200242884) row[22] = -15000; // CGA
 
     // Total #3 11% (index 11, non affecté par le splice) : WECK -35k → -30k
     if (cpt === 92200243302) row[11] = -30000; // WECK Christophe
@@ -3215,6 +3216,7 @@ ENVELOPES.push({
     {ct:'93100278401', nom:'PAYET Romain',               int: 40000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
     {ct:'93100154601', nom:'THOUEILLES Pierre',          int: 13000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
     {ct:'93100298301', nom:'PAYET Laura',                int: 40000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
+    {ct:'92200242884', nom:'COMPAGNIE DE GESTION D\'AQUITAINE', int: 15000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
   ]
 });
 
