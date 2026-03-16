@@ -2739,10 +2739,13 @@ function syncClientsFromProduits() {
 const DOCS_BASE = '/Users/romainpayet/Library/CloudStorage/OneDrive-ALEXA/Site de communication - Gestion sous mandat/12-Relevés Titres/5. Suivi des Produits Structurés/1. Fiches Produits & Docs réglementaires';
 
 function docHref(folder, subfolder, file) {
-  const parts = [DOCS_BASE, folder];
-  if (subfolder) parts.push(subfolder);
-  parts.push(file);
-  return 'file://' + parts.map(encodeURIComponent).join('/');
+  // Encode each path segment individually (folder may contain '/' e.g. '_ARCHIVES/32. Solvay Mars 26')
+  const enc = s => s.split('/').map(encodeURIComponent).join('/');
+  const base = DOCS_BASE.split('/').map(encodeURIComponent).join('/');
+  const parts = [base, enc(folder)];
+  if (subfolder) parts.push(enc(subfolder));
+  parts.push(encodeURIComponent(file));
+  return 'file://' + parts.join('/');
 }
 
 const MONTH_ORDER = {janvier:1,fevrier:2,'février':2,mars:3,avril:4,mai:5,juin:6,juillet:7,'août':8,septembre:9,octobre:10,novembre:11,'décembre':12,decembre:12};
@@ -2766,7 +2769,7 @@ const DOCS = [
     {type:'KID',  label:'KID / DIC',   sub:null, file:'KID - NexAutocall Alexa Rendement Sanofi Décrément 3.92 Mars 2026- FRIP00002EK8.pdf'},
     {type:'MC',   label:'Marché Cible',sub:null, file:'MC - NexAutocall Alexa Rendement Sanofi Décrément 3.92 Mars 2026- FRIP00002EK8.pdf'},
     {type:'TS',   label:'Term Sheet',  sub:null, file:'TS - NexAutocall Alexa Rendement Sanofi Décrément 3.92 Mars 2026- FRIP00002EK8.pdf'},
-    {type:'FICHE',label:'Brochure',    sub:null, file:'NexAutocall Alexa Rendement Sanofi Decrement 3.92 Mars 2026 - FRIP00002EK8 - Alexa.pdf'},
+    {type:'FICHE',label:'Brochure',    sub:null, file:'NexAutocall Alexa Rendement Sanofi Décrément 3.92 Mars 2026 - FRIP00002EK8 - Alexa.pdf'},
   ]},
   {isin:'FRIP000020O8',archive:false,nom:'NexAutocall Alexa Rendement Carrefour Decrement 0.87 EUR Mars 2026',sj:'CARREFOUR',date:'Mars 2026',
    folder:'_ARCHIVES/24. Carrefour Phoenix Mars 26',docs:[
@@ -2829,9 +2832,9 @@ const DOCS = [
   // ── ARCHIVES ──────────────────────────────────────────────────────────
   {isin:'XS3033811632',archive:true,nom:'NexAutocall Alexa Copper Mining Février 2026',sj:'COPPER MINING',date:'Février 2026',
    folder:'_ARCHIVES/33. Cuivre Février 26',docs:[
-    {type:'KID',  label:'KID / DIC',   sub:'Docs réglementaires', file:'KID - NexAutocall Alexa Copper Mining Février 2026  - XS3033811632.pdf'},
-    {type:'MC',   label:'Marché Cible',sub:'Docs réglementaires', file:'MC - NexAutocall Alexa Copper Mining Février 2026  - XS3033811632.pdf'},
-    {type:'TS',   label:'Term Sheet',  sub:'Docs réglementaires', file:'TS - NexAutocall Alexa Copper Mining Février 2026  - XS3033811632.pdf'},
+    {type:'KID',  label:'KID / DIC',   sub:'Docs réglementaires', file:'KID - NexAutocall Alexa Copper Mining Février 2026\u00a0 - XS3033811632.pdf'},
+    {type:'MC',   label:'Marché Cible',sub:'Docs réglementaires', file:'MC - NexAutocall Alexa Copper Mining Février 2026\u00a0 - XS3033811632.pdf'},
+    {type:'TS',   label:'Term Sheet',  sub:'Docs réglementaires', file:'TS - NexAutocall Alexa Copper Mining Février 2026\u00a0 - XS3033811632.pdf'},
     {type:'FICHE',label:'Brochure',    sub:'Fiche produit',       file:'NexAutocall Alexa Rendement Copper Mining Février 2026 - XS3033811632 - Alexa.pdf'},
   ]},
   {isin:'XS3266615890',archive:true,nom:'Participation Chine Alexa Février 2026',sj:'INDICE CHINE',date:'Février 2026',
@@ -3060,7 +3063,7 @@ function renderDocsTab() {
     const btns = (d.docs&&d.docs.length)
       ? d.docs.map(doc=>{
           const href = docHref(d.folder, doc.sub, doc.file);
-          return `<a class="doc-btn ${doc.type}" href="${href}" target="_blank" title="${doc.file}">${doc.label}</a>`;
+          return `<a class="doc-btn ${doc.type}" href="${href}" onclick="window.open(this.href);return false;" title="${doc.file}">${doc.label}</a>`;
         }).join('')
       : '<span class="doc-no-docs">Aucun document disponible</span>';
     const arch = d.archive ? ' <span class="doc-archive-badge">Archive</span>' : '';
