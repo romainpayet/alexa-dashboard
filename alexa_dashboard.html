@@ -3122,6 +3122,9 @@ function patchCDCTO() {
     if (cpt === 92200242431) { row[3]  = (typeof row[3]==='number'?row[3]:0) +  20000; row[18] += 20000; } // GMS : +20k
     if (cpt === 92200242103) { row[3]  = (typeof row[3]==='number'?row[3]:0) +  20000; row[18] += 20000; } // CHARLIE : +20k
     if (cpt === 92200242920) { row[3]  = (typeof row[3]==='number'?row[3]:0) + 100000; row[18] +=100000; } // BROCHET : +100k
+    if (cpt === 92200242884) { row[3]  = (typeof row[3]==='number'?row[3]:0) +  15000; row[18] += 15000; } // CGA : +15k
+    if (cpt === 93100136001) { row[3]  = (typeof row[3]==='number'?row[3]:0) +  13000; row[18] += 13000; } // ALTER EGO HOLDING : +13k
+    if (cpt === 93100298301) { row[3]  = (typeof row[3]==='number'?row[3]:0) +   6000; row[18] +=  6000; } // PAYET Laura : +6k
 
     // CA Avr. 12,1% (index 21 après splice) : overrides sur montants spécifiques
     if (cpt === 92200242431) row[21] = -198000; // GMS : -198k
@@ -3136,8 +3139,12 @@ function patchCDCTO() {
     if (cpt === 92200242904) row[22] =  -25000; // SCI AGR 4
     if (cpt === 93100278401) row[22] =  -40000; // PAYET Romain
     if (cpt === 93100154601) row[22] =  -13000; // THOUEILLES Pierre
-    if (cpt === 93100298301) row[22] =  -35000; // PAYET Laura
+    if (cpt === 93100298301) row[22] =  -40000; // PAYET Laura
     if (String(cpt||'').trim() === 'WLC')   row[22] = -50000; // WLC
+
+    // Total #3 11% (index 11, non affecté par le splice) : WECK -35k → -30k
+    if (cpt === 92200243302) row[11] = -30000; // WECK Christophe
+
     // TOTAL row dans CD_CTO : on efface aussi [18..23] (double sécurité)
     if (String(cpt||'').trim() === 'TOTAL') {
       for (var i = 18; i <= 23; i++) row[i] = null;
@@ -3181,6 +3188,17 @@ patchCDCTO();
   );
 })();
 
+// ── ENVELOPES: Patch Total 11% (XS3156897673) — WECK 35k → 30k ──────────
+(function(){
+  var env = ENVELOPES.find(function(e){ return e.isin === 'XS3156897673'; });
+  if (!env) return;
+  env.clients.forEach(function(c) {
+    if ((c.nom||'').toUpperCase().indexOf('WECK') !== -1) {
+      c.int = 30000; c.vr = 30000; c.vf = 'OUI';
+    }
+  });
+})();
+
 // ── ENVELOPES: Ajoute OAT KG Mémoire Avril 2026 ──────────────────────────
 // objectif = Alexa portion (550k) ; wlcAmt est auto-détecté depuis la ligne WLC du CD
 // WLC n'est PAS dans les clients — il est suivi via la ligne WLC du CD_CTO
@@ -3196,7 +3214,7 @@ ENVELOPES.push({
     {ct:'92200242904', nom:'SCI AGR 4',                  int: 25000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
     {ct:'93100278401', nom:'PAYET Romain',               int: 40000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
     {ct:'93100154601', nom:'THOUEILLES Pierre',          int: 13000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
-    {ct:'93100298301', nom:'PAYET Laura',                int: 35000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
+    {ct:'93100298301', nom:'PAYET Laura',                int: 40000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
   ]
 });
 
