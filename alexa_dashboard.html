@@ -2461,11 +2461,11 @@ function renderCDTable(){
       + `<th colspan="2" style="${emptyStyle}"></th>`
       + `<th colspan="6" style="${grpStyle('#fef3c7','#b45309')}">📅 Rappels du mois</th>`
       + `<th colspan="1" style="${emptyStyle}"></th>`
-      + `<th colspan="8" style="${grpStyle('#ede9fe','#6d28d9')}">✨ Nouveaux produits du mois</th>`
+      + `<th colspan="7" style="${grpStyle('#ede9fe','#6d28d9')}">✨ Nouveaux produits du mois</th>`
       + `<th colspan="1" style="${emptyStyle}"></th>`
       + `<th colspan="1" style="${grpStyle('#fef3c7','#b45309')}">📅 Rappel Avril</th>`
       + `<th colspan="1" style="${emptyStyle}"></th>`
-      + `<th colspan="1" style="${grpStyle('#ede9fe','#6d28d9')}">✨ Nouveau Produit Avril</th>`
+      + `<th colspan="2" style="${grpStyle('#ede9fe','#6d28d9')}">✨ Nouveaux Produits Avril</th>`
       + `<th colspan="1" style="${emptyStyle}"></th>`
       + '</tr>';
   } else if(cdView==='gen'){
@@ -2604,7 +2604,7 @@ function renderCDTable(){
   }).join('');
 
   // Écart row: objectif - |grandTotal| for new product columns only
-  const CD_OBJECTIFS_CTO = {11:650000, 12:850000, 13:575000, 14:500000, 15:500000, 16:1000000, 17:500000, 22:1000000};
+  const CD_OBJECTIFS_CTO = {11:650000, 12:850000, 13:575000, 14:500000, 15:500000, 16:1000000, 17:500000, 21:1000000, 22:600000};
   const CD_OBJECTIFS_GEN = {};
   const cdObjectifs = cdView==='cto' ? CD_OBJECTIFS_CTO : CD_OBJECTIFS_GEN;
 
@@ -3083,6 +3083,122 @@ function renderDocsTab() {
     </div>`;
   }).join('');
 }
+
+// ── CD_CTO: MOVE COLUMN 'New Phoenix #2' → 'OAT Avril 9,35%' ─────────────
+// Déplace la colonne index 18 (New Phoenix #2) vers index 22 (après CA Avr.)
+// Renomme la colonne, met à jour les valeurs clients, recalcule Fin Mars & Dispo Avril.
+function patchCDCTO() {
+  // 1. Header
+  CD_CTO_HDR.splice(18, 1);                   // retire 'New Phoenix #2'
+  CD_CTO_HDR.splice(22, 0, 'OAT Avril 9,35%'); // insère avant 'Disponibilités Avril'
+  // Nouveau mapping: …,17=CA Brenier,18=Fin Mars,19=CA Mars 25,20=New Cash 04/26,
+  //                 21=CA Avr. 12,1%,22=OAT Avril 9,35%,23=Disponibilités Avril
+
+  // 2. Objectifs : patchés directement dans le source HTML (cf. Section 5c Python)
+
+  // 3. CD_CTO_TOTAL — constante séparée utilisée par renderCDTable pour computedTot
+  // Il faut aussi la splicer ET effacer [18..23] pour forcer les sommes dynamiques
+  CD_CTO_TOTAL.splice(18, 1);        // retire colonne 18 (New Phoenix #2)
+  CD_CTO_TOTAL.splice(22, 0, null);  // insère OAT à la position 22
+  for (var j = 18; j <= 23; j++) CD_CTO_TOTAL[j] = null; // → computedTot = sommes depuis regularRows
+
+  // 4. Lignes de données
+  CD_CTO.forEach(function(row) {
+    var cpt = row[0];
+    var oldPhoenixVal = row[18]; // valeur Phoenix #2 avant splice (à retirer de Mars)
+    row.splice(18, 1);            // retire old index 18 (Phoenix #2)
+    row.splice(22, 0, null);      // insère null à la nouvelle position 22 (OAT)
+
+    // Recalcul uniquement sur les lignes clients (cpt numérique)
+    if (typeof cpt === 'number') {
+      // Fin Mars (index 18 après splice) : retire Phoenix #2 du sous-total de mars
+      if (oldPhoenixVal !== null && oldPhoenixVal !== undefined && typeof row[18] === 'number') {
+        row[18] = row[18] - oldPhoenixVal;
+      }
+    }
+
+    // New Cash Mars (index 3, non affecté par le splice) : apports en cash de mars
+    // + ajustement Fin Mars (index 18 après splice) car il agrège les flux de mars
+    if (cpt === 92200242431) { row[3]  = (typeof row[3]==='number'?row[3]:0) +  20000; row[18] += 20000; } // GMS : +20k
+    if (cpt === 92200242103) { row[3]  = (typeof row[3]==='number'?row[3]:0) +  20000; row[18] += 20000; } // CHARLIE : +20k
+    if (cpt === 92200242920) { row[3]  = (typeof row[3]==='number'?row[3]:0) + 100000; row[18] +=100000; } // BROCHET : +100k
+
+    // CA Avr. 12,1% (index 21 après splice) : overrides sur montants spécifiques
+    if (cpt === 92200242431) row[21] = -198000; // GMS : -198k
+    if (cpt === 92200242103) row[21] = -120000; // CHARLIE : -120k
+    if (cpt === 93100278401) row[21] =  -40000; // PAYET Romain : -40k (nouveau)
+
+    // Valeurs OAT (index 22) — clients souscrits à l'OAT KG Mémoire Avril 2026 + WLC
+    if (cpt === 92200242431) row[22] = -100000; // GMS INVESTISSEMENT
+    if (cpt === 92200242103) row[22] = -120000; // DOCTEUR CHARLIE VERBRUGGEN
+    if (cpt === 92200242920) row[22] = -100000; // BROCHET Pierre-Edouard
+    if (cpt === 93100229301) row[22] =  -50000; // BOUDEY Nathalie
+    if (cpt === 92200242904) row[22] =  -25000; // SCI AGR 4
+    if (cpt === 93100278401) row[22] =  -40000; // PAYET Romain
+    if (cpt === 93100154601) row[22] =  -13000; // THOUEILLES Pierre
+    if (cpt === 93100298301) row[22] =  -35000; // PAYET Laura
+    if (String(cpt||'').trim() === 'WLC')   row[22] = -50000; // WLC
+    // TOTAL row dans CD_CTO : on efface aussi [18..23] (double sécurité)
+    if (String(cpt||'').trim() === 'TOTAL') {
+      for (var i = 18; i <= 23; i++) row[i] = null;
+    }
+
+    // Disponibilités Avril (index 23) = Fin Mars + CA Mars 25 + New Cash + CA Avr + OAT
+    // (tous les flux d'avril : retours de produits + nouveaux investissements)
+    if (typeof cpt === 'number' && typeof row[18] === 'number') {
+      var finMars  = row[18];
+      var caMars25 = typeof row[19] === 'number' ? row[19] : 0;
+      var newCash  = typeof row[20] === 'number' ? row[20] : 0;
+      var caAvr    = typeof row[21] === 'number' ? row[21] : 0;
+      var oat      = typeof row[22] === 'number' ? row[22] : 0;
+      row[23] = finMars + caMars25 + newCash + caAvr + oat;
+    }
+  });
+
+  // 5. Ligne DATE : date OAT Avril
+  var dateRow = CD_CTO.find(function(r){ return String(r[0]||'').trim().startsWith('DATE'); });
+  if (dateRow) dateRow[22] = '30/04/2026';
+
+  // 6. Ligne ISIN : ISIN OAT Avril
+  var isinRow = CD_CTO.find(function(r){ return String(r[0]||'').trim() === 'ISIN'; });
+  if (isinRow) isinRow[22] = 'TBD';
+}
+patchCDCTO();
+
+// ── ENVELOPES: Patch CA Avr. 12,1% (FRIP00002CS5) ───────────────────────
+// GMS : 108k→198k, Charlie : 117k→120k, + Romain Payet 40k (nouveau)
+(function(){
+  var env = ENVELOPES.find(function(e){ return e.isin === 'FRIP00002CS5'; });
+  if (!env) return;
+  env.clients.forEach(function(c) {
+    if (c.ct === '92200242431') c.int = 198000; // GMS
+    if (c.ct === '92200242103') c.int = 120000; // Charlie
+    if (c.ct === '93100278401') c.int =  40000; // Payet Romain : 39k → 40k
+  });
+  var hasPayet = env.clients.some(function(c){ return c.ct === '93100278401'; });
+  if (!hasPayet) env.clients.push(
+    {ct:'93100278401', nom:'PAYET Romain', int:40000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''}
+  );
+})();
+
+// ── ENVELOPES: Ajoute OAT KG Mémoire Avril 2026 ──────────────────────────
+// objectif = Alexa portion (550k) ; wlcAmt est auto-détecté depuis la ligne WLC du CD
+// WLC n'est PAS dans les clients — il est suivi via la ligne WLC du CD_CTO
+ENVELOPES.push({
+  isin:'TBD', nom:'OAT KG Mémoire Avril 2026', strike:'30/04/2026',
+  month:'Avril 2026', partenaire:'NEXO', coupon:0.0935,
+  objectif:550000, tot_env:483000, tot_int:0, tot_verse:0, tot_valide:0, uf:'4%',
+  clients:[
+    {ct:'92200242431', nom:'GMS INVESTISSEMENT',         int:100000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
+    {ct:'92200242103', nom:'DOCTEUR CHARLIE VERBRUGGEN', int:120000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
+    {ct:'92200242920', nom:'BROCHET Pierre-Edouard',     int:100000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
+    {ct:'93100229301', nom:'BOUDEY Nathalie',            int: 50000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
+    {ct:'92200242904', nom:'SCI AGR 4',                  int: 25000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
+    {ct:'93100278401', nom:'PAYET Romain',               int: 40000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
+    {ct:'93100154601', nom:'THOUEILLES Pierre',          int: 13000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
+    {ct:'93100298301', nom:'PAYET Laura',                int: 35000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
+  ]
+});
 
 // ── RUN ONCE AT PAGE LOAD ─────────────────────────────────────────────────
 // Recalcule ps / ps_kg / ps_risques dans CLIENTS dès l'ouverture du fichier.
