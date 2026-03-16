@@ -116,6 +116,30 @@ tr.cr{display:none} tr.cr.open{display:table-row}
 .ms-item input[type=checkbox]{width:13px;height:13px;cursor:pointer;accent-color:#7c3aed;flex-shrink:0}
 .ms-clear{font-size:11px;color:#9ca3af;padding:4px 14px 6px;border-bottom:1px solid #f0f0f0;cursor:pointer;display:block}
 .ms-clear:hover{color:#7c3aed}
+
+/* ── DOCUMENTS TAB ─────────────────────────────────── */
+.docs-toolbar{display:flex;gap:8px;padding:12px 18px;flex-wrap:wrap;align-items:center;border-bottom:1px solid #e5e7eb;background:#fafbfc;flex-shrink:0}
+.docs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px;padding:16px 18px;overflow-y:auto}
+.doc-card{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:10px;box-shadow:0 1px 4px rgba(0,0,0,.05);transition:box-shadow .2s}
+.doc-card:hover{box-shadow:0 4px 14px rgba(0,0,0,.1)}
+.doc-card.archived{opacity:.72;background:#fafafa}
+.doc-card-head{display:flex;align-items:flex-start;gap:9px}
+.doc-isin-badge{font-size:10px;font-weight:700;letter-spacing:.04em;background:#1e3a5f;color:#fff;padding:2px 7px;border-radius:4px;white-space:nowrap;flex-shrink:0;margin-top:2px}
+.doc-card-title{font-size:12.5px;font-weight:600;color:#1e3a5f;line-height:1.4;flex:1}
+.doc-card-meta{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.doc-sj-chip{font-size:11px;font-weight:600;background:#f0f4ff;color:#3b5bdb;padding:2px 8px;border-radius:20px;border:1px solid #c5d0fd}
+.doc-date-chip{font-size:11px;color:#6b7280;background:#f3f4f6;padding:2px 7px;border-radius:20px}
+.doc-archive-badge{font-size:10px;font-weight:600;background:#f3f4f6;color:#6b7280;border:1px solid #d1d5db;padding:2px 7px;border-radius:20px}
+.doc-btns{display:flex;flex-wrap:wrap;gap:6px}
+.doc-btn{display:inline-flex;align-items:center;font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:6px;text-decoration:none;transition:opacity .15s,transform .1s;cursor:pointer;border:none}
+.doc-btn:hover{opacity:.82;transform:translateY(-1px)}
+.doc-btn.KID{background:#dbeafe;color:#1d4ed8}
+.doc-btn.MC{background:#d1fae5;color:#065f46}
+.doc-btn.TS{background:#ede9fe;color:#5b21b6}
+.doc-btn.FICHE{background:#fed7aa;color:#92400e}
+.doc-no-docs{font-size:12px;color:#9ca3af;font-style:italic}
+.docs-count-lbl{font-size:12px;color:#6b7280;margin-left:auto}
+
 </style>
 </head>
 <body>
@@ -132,6 +156,7 @@ tr.cr{display:none} tr.cr.open{display:table-row}
     <button class="nb" data-tab="clients"><span class="nb-ic">👥</span><span>Clients</span></button>
     <button class="nb" data-tab="cashdispo"><span class="nb-ic">💵</span><span>Cash Dispo</span></button>
     <button class="nb" data-tab="enveloppes"><span class="nb-ic">📋</span><span>Enveloppes</span></button>
+    <button class="nb" data-tab="documents"><span class="nb-ic">📁</span><span>Documents</span></button>
   </nav>
   <div class="sb-ft">
     <button class="col-btn" id="colBtn"><span class="nb-ic">◀</span><span id="colLbl">Réduire</span></button>
@@ -284,6 +309,21 @@ tr.cr{display:none} tr.cr.open{display:table-row}
         </table>
       </div>
     </div>
+  </div>
+
+
+  <!-- ── DOCUMENTS ── -->
+  <div class="tab" id="tab-documents" style="display:flex;flex-direction:column;min-height:0">
+    <div class="docs-toolbar">
+      <div class="ms-wrap"><button class="ms-btn" id="msDSJ-btn" onclick="msToggle('msDSJ',event)">Tous sous-jacents ▾</button><div class="ms-drop" id="msDSJ-drop" onclick="event.stopPropagation()"></div></div>
+      <input class="si" id="docsSearch" placeholder="🔍 Rechercher produit…" oninput="renderDocsTab()" style="min-width:180px">
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#374151;cursor:pointer;user-select:none;margin-left:4px">
+        <input type="checkbox" id="docsShowArchive" onchange="renderDocsTab()" style="width:14px;height:14px;cursor:pointer;accent-color:#7c3aed">
+        Afficher archives
+      </label>
+      <span class="docs-count-lbl" id="docsCountLbl"></span>
+    </div>
+    <div class="docs-grid" id="docsGrid"></div>
   </div>
 
   </div><!-- /content -->
@@ -1271,14 +1311,15 @@ document.querySelectorAll('.nb').forEach(b=>b.addEventListener('click',()=>{
   const t=b.dataset.tab;
   document.querySelectorAll('.tab').forEach(p=>p.classList.remove('active'));
   document.getElementById('tab-'+t).classList.add('active');
-  document.getElementById('pgT').textContent={dashboard:'Dashboard',produits:'Produits',expo:'Expo Clients',clients:'Clients',enveloppes:'Enveloppes',cashdispo:'Cash Dispo'}[t]||t;
+  document.getElementById('pgT').textContent={dashboard:'Dashboard',produits:'Produits',expo:'Expo Clients',clients:'Clients',enveloppes:'Enveloppes',cashdispo:'Cash Dispo',documents:'Documents'}[t]||t;
   if(t==='dashboard') renderDashboard();
   if(t==='expo'&&!eInit)initExpo();
   if(t==='clients'&&!cInit)initClients();
   if(t==='enveloppes'&&!envInit)initEnv();
   if(t==='cashdispo'&&!cdInit)initCD();
+  if(t==='documents'&&!dInit){initDocsTab();dInit=true;}else if(t==='documents')renderDocsTab();
 }));
-let sbC=false;
+let sbC=false,dInit=false;
 document.getElementById('colBtn').addEventListener('click',()=>{
   sbC=!sbC;
   document.getElementById('sb').classList.toggle('col',sbC);
@@ -2659,6 +2700,385 @@ function exportEnvToExcel(){
   const yyyy=today.getFullYear();
   XLSX.writeFile(wb,`Enveloppes_ALEXA_${dd}${mm}${yyyy}.xlsx`);
 }
+
+
+// ── CLIENTS AUTO-SYNC ─────────────────────────────────────────────────────
+function syncClientsFromProduits() {
+  // Build nom→cpt lookup from CLIENTS (for PRODUITS rows that lack cpt)
+  const nomToCpt = {};
+  CLIENTS.forEach(c => { if(c.client) nomToCpt[c.client] = c.cpt; });
+
+  // Scan PRODUITS: compute ps (total enc) and ps_kg (enc where pc===-1) per cpt
+  const psMap = {}, kgMap = {};
+  let curPc = null, curExit = '';
+  PRODUITS.forEach(row => {
+    if (row.t === 1) {
+      curPc   = row.pc;
+      curExit = row.exit || '';
+    } else if (row.t === 0 && curExit !== 'EXIT') {
+      const cpt = row.cpt || nomToCpt[row.nom];
+      if (!cpt) return;
+      const enc = row.enc || 0;
+      psMap[cpt] = (psMap[cpt] || 0) + enc;
+      if (curPc === -1) kgMap[cpt] = (kgMap[cpt] || 0) + enc;
+    }
+  });
+
+  // Update CLIENTS array in memory
+  CLIENTS.forEach(c => {
+    const ps = psMap[c.cpt];
+    if (ps === undefined) return;
+    const kg = kgMap[c.cpt] || 0;
+    c.ps         = ps;
+    c.ps_kg      = kg;
+    c.ps_risques = ps - kg;
+  });
+}
+
+// ── DOCUMENTS TAB ─────────────────────────────────────────────────────────
+const DOCS_BASE = '/Users/romainpayet/Library/CloudStorage/OneDrive-ALEXA/Site de communication - Gestion sous mandat/12-Relevés Titres/5. Suivi des Produits Structurés/1. Fiches Produits & Docs réglementaires';
+
+function docHref(folder, subfolder, file) {
+  // Encode each path segment individually (folder may contain '/' e.g. '_ARCHIVES/32. Solvay Mars 26')
+  const enc = s => s.split('/').map(encodeURIComponent).join('/');
+  const base = DOCS_BASE.split('/').map(encodeURIComponent).join('/');
+  const parts = [base, enc(folder)];
+  if (subfolder) parts.push(enc(subfolder));
+  parts.push(encodeURIComponent(file));
+  return 'file://' + parts.join('/');
+}
+
+const MONTH_ORDER = {janvier:1,fevrier:2,'février':2,mars:3,avril:4,mai:5,juin:6,juillet:7,'août':8,septembre:9,octobre:10,novembre:11,'décembre':12,decembre:12};
+function dateKey(d) {
+  const p = d.toLowerCase().split(' ');
+  return parseInt(p[1]||0)*100 + (MONTH_ORDER[p[0]]||0);
+}
+
+const DOCS = [
+  // ── EN COURS ──────────────────────────────────────────────────────────
+  {isin:'FRIP00002CS5',archive:false,nom:'NexAutocall Alexa Rendement Crédit Agricole Decrement 1.10 Avril 2026',sj:'CRÉDIT AGRICOLE',date:'Avril 2026',
+   folder:'FRIP00002CS5_NexAutocall Alexa Rendement Crédit Agricole Decrement 1.10 Avril 2026',docs:[
+    {type:'KID',  label:'KID / DIC',          sub:null, file:'KID - NexAutocall Alexa Rendement Crédit Agricole Decrement 1.10 Avril 2026 - FRIP00002CS5.pdf'},
+    {type:'MC',   label:'Marché Cible',        sub:null, file:'MC - NexAutocall Alexa Rendement Crédit Agricole Decrement 1.10 Avril 2026 - FRIP00002CS5.pdf'},
+    {type:'TS',   label:'Term Sheet',          sub:null, file:'TS -NexAutocall Alexa Rendement Crédit Agricole Decrement 1.10 Avril 2026 - FRIP00002CS5.pdf'},
+    {type:'TS',   label:'Term Sheet (Prelim)', sub:null, file:'FRIP00002CS5 (TS) – 12Y EUR Autocallable Note on MQDCA110 (FR).pdf'},
+    {type:'FICHE',label:'Brochure',            sub:null, file:'NexAutocall Alexa Rendement Crédit Agricole Decrement 1.10 Avril 2026 - FRIP00002CS5 - Alexa.pdf'},
+  ]},
+  {isin:'FRIP00002EK8',archive:false,nom:'NexAutocall Alexa Rendement Sanofi Décrément 3.92 Mars 2026',sj:'SANOFI',date:'Mars 2026',
+   folder:'FRIP00002EK8_NexAutocall Alexa Rendement Sanofi Décrément 3.92 Mars 2026',docs:[
+    {type:'KID',  label:'KID / DIC',   sub:null, file:'KID - NexAutocall Alexa Rendement Sanofi Décrément 3.92 Mars 2026- FRIP00002EK8.pdf'},
+    {type:'MC',   label:'Marché Cible',sub:null, file:'MC - NexAutocall Alexa Rendement Sanofi Décrément 3.92 Mars 2026- FRIP00002EK8.pdf'},
+    {type:'TS',   label:'Term Sheet',  sub:null, file:'TS - NexAutocall Alexa Rendement Sanofi Décrément 3.92 Mars 2026- FRIP00002EK8.pdf'},
+    {type:'FICHE',label:'Brochure',    sub:null, file:'NexAutocall Alexa Rendement Sanofi Décrément 3.92 Mars 2026 - FRIP00002EK8 - Alexa.pdf'},
+  ]},
+  {isin:'FRIP000020O8',archive:false,nom:'NexAutocall Alexa Rendement Carrefour Decrement 0.87 EUR Mars 2026',sj:'CARREFOUR',date:'Mars 2026',
+   folder:'_ARCHIVES/24. Carrefour Phoenix Mars 26',docs:[
+    {type:'KID',  label:'KID / DIC',   sub:'Docs réglementaires', file:'KID - NexAutocall Alexa Rendement Carrefour Decrement 0.87 EUR Mars 2026 - FRIP000020O8.pdf'},
+    {type:'MC',   label:'Marché Cible',sub:'Docs réglementaires', file:'MC - NexAutocall Alexa Rendement Carrefour Decrement 0.87 EUR Mars 2026 - FRIP000020O8.pdf'},
+    {type:'TS',   label:'Term Sheet',  sub:'Docs réglementaires', file:'TS - NexAutocall Alexa Rendement Carrefour Decrement 0.87 EUR Mars 2026 - FRIP000020O8.pdf'},
+    {type:'FICHE',label:'Brochure',    sub:'Fiche produit',       file:'NexAutocall Alexa Rendement Carrefour Decrement 0.87 EUR Mars 2026 - FRIP000020O8 - Alexa.pdf'},
+  ]},
+  {isin:'XS3256117824',archive:false,nom:'NexAutocall Alexa Rendement Solvay Decrement 2.20 EUR Mars 2026',sj:'SOLVAY',date:'Mars 2026',
+   folder:'_ARCHIVES/32. Solvay  Mars 26',docs:[
+    {type:'KID',  label:'KID / DIC',   sub:'Docs réglemantaires', file:'KID - NexAutocall Alexa Rendement Solvay Decrement  2.20 EUR- XS3256117824.pdf'},
+    {type:'MC',   label:'Marché Cible',sub:'Docs réglemantaires', file:'MC - NexAutocall Alexa Rendement Solvay Decrement 2.20 EUR- XS3256117824.pdf'},
+    {type:'TS',   label:'Term Sheet',  sub:'Docs réglemantaires', file:'TS - NexAutocall Alexa Rendement Solvay Decrement 2.20 EUR - XS3256117824.pdf'},
+    {type:'FICHE',label:'Brochure',    sub:'Fiche produit',       file:'NexAutocall Alexa Rendement Solvay Decrement 2.20 EUR Mars 2026 - XS3256117824 - Alexa.pdf'},
+  ]},
+  {isin:'XS3256123806',archive:false,nom:'NexAutocall Alexa Rendement Gecina Decrement 5.30 EUR Mars 2026',sj:'GECINA',date:'Mars 2026',
+   folder:'XS3256123806_NexAutocall Alexa Rendement Gecina Decrement 5.30 EUR Mars 2026',docs:[
+    {type:'KID',  label:'KID / DIC',   sub:'Docs réglementaires', file:'KID - NexAutocall Alexa Gecina 5.30 Mars 2026 - XS3256123806.pdf'},
+    {type:'MC',   label:'Marché Cible',sub:'Docs réglementaires', file:'MC -  NexAutocall Alexa Gecina 5.30 Mars 2026 - XS3256123806.pdf'},
+    {type:'TS',   label:'Term Sheet',  sub:'Docs réglementaires', file:'TS - NexAutocall Alexa Gecina 5.30 Mars 2026 - XS3256123806.pdf'},
+    {type:'FICHE',label:'Brochure',    sub:'Fiche produit',       file:'NexAutocall Alexa Rendement Gecina Decrement 5.30 EUR Mars 2026 - XS3256123806 - Alexa.pdf'},
+  ]},
+  {isin:'XS3156897673',archive:false,nom:'NexAutocall Alexa Rendement Total Decrement 3.40 Mars 2026',sj:'TOTALENERGIES',date:'Mars 2026',
+   folder:'XS3156897673_NexAutocall Alexa Rendement Total Decrement 3.40 Mars 2026',docs:[
+    {type:'KID',  label:'KID / DIC',          sub:'Docs réglementaires', file:'KID - NexAutocall Alexa Rendement Total Decrement 3.40 Mars 2026 - XS3156897673.pdf'},
+    {type:'MC',   label:'Marché Cible',        sub:'Docs réglementaires', file:'MC - NexAutocall Alexa Rendement Total Decrement 3.40 Mars 2026 - XS3156897673.pdf'},
+    {type:'TS',   label:'Term Sheet FR',       sub:'Docs réglementaires', file:'TS FR - NexAutocall Alexa Rendement Total Decrement 3.40 Mars 2026 - XS3156897673.pdf'},
+    {type:'TS',   label:'Term Sheet EN',       sub:'Docs réglementaires', file:'TS EN - NexAutocall Alexa Rendement Total Decrement 3.40 Mars 2026 - XS3156897673.pdf'},
+    {type:'TS',   label:'Term Sheet (Prelim)', sub:'Docs réglementaires', file:'Term sheet_26LEQ002434_Prelim_FR.pdf'},
+    {type:'FICHE',label:'Brochure',            sub:'Fiche produit',       file:'NexAutocall Alexa Rendement Total Decrement 3.40 Mars 2026 - XS3156897673 - Alexa.pdf'},
+  ]},
+  {isin:'XS313638359',archive:false,nom:'NexAutocall Alexa Bouygues Décrément 2.00 Mars 2026',sj:'BOUYGUES',date:'Mars 2026',
+   folder:'XS313638359_NexAutocall Alexa Bouygues Décrément 2.00 Mars 2026',docs:[
+    {type:'KID',label:'KID / DIC',     sub:null, file:'KID - NexAutocall Alexa Bouygues Décrément 2.00 Mars 2026 - XS313638359.pdf'},
+    {type:'MC', label:'Marché Cible',  sub:null, file:'MC - NexAutocall Alexa Bouygues Décrément 2.00 Mars 2026 - XS313638359.pdf'},
+    {type:'TS', label:'Term Sheet FR', sub:null, file:'TS FR - NexAutocall Alexa Bouygues Décrément 2.00 Mars 2026 - XS3136383.pdf'},
+    {type:'TS', label:'Term Sheet EN', sub:null, file:'TS EN - NexAutocall Alexa Bouygues Décrément 2.00 Mars 2026 - XS3136383.pdf'},
+  ]},
+  {isin:'FR1459ABC009',archive:false,nom:'Tempo Phoenix Trimestriel Crédit Agricole D 1.10 Mars 2026',sj:'CRÉDIT AGRICOLE',date:'Mars 2026',
+   folder:'FR1459ABC009_TEMPO PHOENIX TRIMESTRIEL CREDIT AGRICOLE D 1.10 MARS 2026',docs:[
+    {type:'KID',  label:'KID / DIC',   sub:'Docs réglementaires', file:'KID - TEMPO PHOENIX TRIMESTRIEL CREDIT AGRICOLE D 1.10 MARS 2026 - FR1459ABC009.pdf'},
+    {type:'MC',   label:'Marché Cible',sub:'Docs réglementaires', file:'Marché cible - TEMPO PHOENIX TRIMESTRIEL CREDIT AGRICOLE D 1.10 MARS 2026 - FR1459ABC009.pdf'},
+    {type:'TS',   label:'Term Sheet',  sub:'Docs réglementaires', file:'TS - TEMPO PHOENIX TRIMESTRIEL CREDIT AGRICOLE D 1.10 MARS 2026 - FR1459ABC009.pdf'},
+    {type:'FICHE',label:'Brochure',    sub:'Fiche produit',       file:'Brochure - TEMPO PHOENIX TRIMESTRIEL CREDIT AGRICOLE D 1.10 MARS 2026 - FR1459ABC009.pdf'},
+  ]},
+  {isin:'FR1459ABB811',archive:false,nom:'Tempo Dégressif TotalEnergies 3,06 EUR Mars 2026',sj:'TOTALENERGIES',date:'Mars 2026',
+   folder:'FR1459ABB811_TEMPO DEGRESSIF TOTALENERGIES 3,06 EUR MARS 2026',docs:[
+    {type:'KID',  label:'KID / DIC',   sub:'Docs réglementaires', file:'KID - TEMPO DEGRESSIF TOTALENERGIES 3,06 EUR MARS 2026 - FR1459ABB811.pdf'},
+    {type:'MC',   label:'Marché Cible',sub:'Docs réglementaires', file:'Marché cible - TEMPO DEGRESSIF TOTALENERGIES 3,06 EUR MARS 2026 - FR1459ABB811.pdf'},
+    {type:'TS',   label:'Term Sheet',  sub:'Docs réglementaires', file:'TS - TEMPO DEGRESSIF TOTALENERGIES 3,06 EUR MARS 2026 - FR1459ABB811.pdf'},
+    {type:'FICHE',label:'Brochure',    sub:'Fiche produit',       file:'Brochure - TEMPO DEGRESSIF TOTALENERGIES 3,06 EUR MARS 2026 - FR1459ABB811.pdf'},
+  ]},
+  {isin:'FR0014016ZQ3',archive:false,nom:'NexAutocall Alexa Rendement Crédit Agricole Decrement 1.10 Mars 2026',sj:'CRÉDIT AGRICOLE',date:'Mars 2026',
+   folder:'FR0014016ZQ3_NexAutocall Alexa Rendement Crédit Agricole Decrement 1.10 Mars 2026',docs:[
+    {type:'KID',label:'KID / DIC',          sub:null, file:'KID - NexAutocall Alexa Rendement Crédit Agricole Decrement 1.10 Mars 2026 - FR0014016ZQ3.pdf'},
+    {type:'MC', label:'Marché Cible',        sub:null, file:'MC - NexAutocall Alexa Rendement Crédit Agricole Decrement 1.10 Mars 2026 - FR0014016ZQ3.pdf'},
+    {type:'TS', label:'Term Sheet',          sub:null, file:'TS - NexAutocall Alexa Rendement Crédit Agricole Decrement 1.10 Mars 2026 - FR0014016ZQ3.pdf'},
+    {type:'TS', label:'Product Term Sheet',  sub:null, file:'Product Term Sheet_NexAutocall Alexa Rendement Crédit Agricole Decrement 1_10 EUR Mars 2026.pdf'},
+  ]},
+  // ── ARCHIVES ──────────────────────────────────────────────────────────
+  {isin:'XS3033811632',archive:true,nom:'NexAutocall Alexa Copper Mining Février 2026',sj:'COPPER MINING',date:'Février 2026',
+   folder:'_ARCHIVES/33. Cuivre Février 26',docs:[
+    {type:'KID',  label:'KID / DIC',   sub:'Docs réglementaires', file:'KID - NexAutocall Alexa Copper Mining Février 2026\u00a0 - XS3033811632.pdf'},
+    {type:'MC',   label:'Marché Cible',sub:'Docs réglementaires', file:'MC - NexAutocall Alexa Copper Mining Février 2026\u00a0 - XS3033811632.pdf'},
+    {type:'TS',   label:'Term Sheet',  sub:'Docs réglementaires', file:'TS - NexAutocall Alexa Copper Mining Février 2026\u00a0 - XS3033811632.pdf'},
+    {type:'FICHE',label:'Brochure',    sub:'Fiche produit',       file:'NexAutocall Alexa Rendement Copper Mining Février 2026 - XS3033811632 - Alexa.pdf'},
+  ]},
+  {isin:'XS3266615890',archive:true,nom:'Participation Chine Alexa Février 2026',sj:'INDICE CHINE',date:'Février 2026',
+   folder:'_ARCHIVES/35. Chine Capriona Février 26',docs:[
+    {type:'KID',label:'KID / DIC',    sub:null, file:'KID - Participation Chine Alexa Février 2026 - XS3266615890.pdf'},
+    {type:'MC', label:'Marché Cible', sub:null, file:'MC - Participation Chine Alexa Février 2026 - XS3266615890.pdf'},
+    {type:'TS', label:'Term Sheet FR',sub:null, file:'TS FR - Participation Chine Alexa Février 2026 - XS3266615890.pdf'},
+    {type:'TS', label:'Term Sheet',   sub:null, file:'TS - Participation Chine Alexa Février 2026 - XS3266615890.pdf'},
+  ]},
+  {isin:'XS3136507152',archive:true,nom:'NexAutocall Alexa Rendement Carrefour Décrément 0.87 Février 2026',sj:'CARREFOUR',date:'Février 2026',
+   folder:'_ARCHIVES/34. Carrefour Capriona Février 26',docs:[
+    {type:'KID',label:'KID / DIC',    sub:'Docs réglemantaires', file:'KID - NexAutocall Alexa Rendement Carrefour Décrément 0.87 Février 2026 - XS3136507152.pdf'},
+    {type:'MC', label:'Marché Cible', sub:'Docs réglemantaires', file:'MC - NexAutocall Alexa Rendement Carrefour Décrément 0.87 Février 2026 - XS3136507152.pdf'},
+    {type:'TS', label:'Term Sheet',   sub:'Docs réglemantaires', file:'TS - NexAutocall Alexa Rendement Carrefour Décrément 0.87 Février 2026 - XS3136507152.pdf'},
+    {type:'TS', label:'Term Sheet FR',sub:'Docs réglemantaires', file:'TS FR - NexAutocall Alexa Rendement Carrefour Décrément 0.87 Février 2026 - XS3136507152.pdf'},
+  ]},
+  {isin:'XS3256113328',archive:true,nom:'NexAutocall Alexa Rendement Edenred Decrement 1.10 Février 2026',sj:'EDENRED',date:'Février 2026',
+   folder:'_ARCHIVES/36. Edenred Capriona Février 26',docs:[
+    {type:'KID',label:'KID / DIC',   sub:null, file:'KID - NexAutocall Alexa Rendement Edenred Decrement 1.10 Février 2026 - XS3256113328.pdf'},
+    {type:'MC', label:'Marché Cible',sub:null, file:'MC - NexAutocall Alexa Rendement Edenred Decrement 1.10 Février 2026 - XS3256113328.pdf'},
+    {type:'TS', label:'Term Sheet',  sub:null, file:'TS - NexAutocall Alexa Rendement Edenred Decrement 1.10 Février 2026 - XS3256113328.pdf'},
+  ]},
+  {isin:'XS3256122584',archive:true,nom:'NexAutocall Alexa Rendement Edenred Decrement 1 EUR Février 2026',sj:'EDENRED',date:'Février 2026',
+   folder:'_ARCHIVES/21. Edenred Phoenix Février 26',docs:[
+    {type:'KID',  label:'KID / DIC',        sub:'Docs réglementaires', file:'KID - NexAutocall Alexa Rendement Edenred Decrement 1 EUR Février 2026 - XS3256122584.pdf'},
+    {type:'MC',   label:'Marché Cible',     sub:'Docs réglementaires', file:'TM - NexAutocall Alexa Rendement Edenred Decrement 1 EUR Février 2026 - XS3256122584.pdf'},
+    {type:'TS',   label:'Term Sheet',       sub:'Docs réglementaires', file:'TS - NexAutocall Alexa Rendement Edenred Decrement 1 EUR Février 2026 - XS3256122584.pdf'},
+    {type:'TS',   label:'Term Sheet (alt)', sub:'Docs réglementaires', file:'TS - XS3256122584.pdf'},
+    {type:'FICHE',label:'Brochure',         sub:'Fiche produit',       file:'NexAutocall Alexa Rendement Edenred Decrement 1 EUR Février 2026 –  XS3256122584.pdf'},
+  ]},
+  {isin:'XS3256119440',archive:true,nom:'NexAutocall Alexa Edenred Decrement 1 EUR Février 2026',sj:'EDENRED',date:'Février 2026',
+   folder:'_ARCHIVES/22. Edenred Athena Février 26',docs:[
+    {type:'KID',  label:'KID / DIC',        sub:'Docs réglementaires', file:'KID - NexAutocall Alexa Edenred Decrement 1 EUR Février 2026 - XS3256119440.pdf'},
+    {type:'MC',   label:'Marché Cible',     sub:'Docs réglementaires', file:'TM - NexAutocall Alexa Edenred Decrement 1 EUR Février 2026 - XS3256119440.pdf'},
+    {type:'TS',   label:'Term Sheet',       sub:'Docs réglementaires', file:'TS - NexAutocall Alexa Edenred Decrement 1 EUR Février 2026 - XS3256119440.pdf'},
+    {type:'TS',   label:'Term Sheet (alt)', sub:'Docs réglementaires', file:'TS - XS3256119440.pdf'},
+    {type:'FICHE',label:'Brochure',         sub:'Fiche produit',       file:'NEXAUTOCALL ALEXA EDENRED DECREMENT 1EUR FEVRIER 2026 – XS3256119440.pdf'},
+  ]},
+  {isin:'XS3255759303',archive:true,nom:'Note Taux Espagne Alexa Février 2026',sj:'TAUX',date:'Février 2026',
+   folder:'_ARCHIVES/30. Taux Espagne Capriona - Février 26',docs:[
+    {type:'KID',  label:'KID / DIC',     sub:'Docs réglementaires', file:'KID - Note taux Espagne 2026 -XS3255759303.pdf'},
+    {type:'MC',   label:'Marché Cible',  sub:'Docs réglementaires', file:'MC - Note taux Espagne 2026 -XS3255759303.pdf'},
+    {type:'TS',   label:'Term Sheet EN', sub:'Docs réglementaires', file:'TS EN - Note taux Espagne 2026 -XS3255759303.pdf'},
+    {type:'TS',   label:'Term Sheet FR', sub:'Docs réglementaires', file:'TS FR - Note taux Espagne 2026 -XS3255759303.pdf'},
+    {type:'FICHE',label:'Brochure',      sub:'Fiche produit',       file:'Note taux Espagne 2026 - XS3255759303 - Alexa.pdf'},
+  ]},
+  {isin:'XS3156906847',archive:true,nom:'NexAutocall Alexa Rendement Total Decrement 3.40 Février 2026',sj:'TOTALENERGIES',date:'Février 2026',
+   folder:'_ARCHIVES/25. Total Phoenix Février 26',docs:[
+    {type:'KID',  label:'KID / DIC',          sub:'Docs réglementaires', file:'KID - NexAutocall Alexa Rendement Total Decrement 3.40 Fevrier 2026 - XS3156906847.pdf'},
+    {type:'MC',   label:'Marché Cible',        sub:'Docs réglementaires', file:'MC - NexAutocall Alexa Rendement Total Decrement 3.40 Fevrier 2026 - XS3156906847.pdf'},
+    {type:'TS',   label:'Term Sheet EN',       sub:'Docs réglementaires', file:'TS EN - NexAutocall Alexa Rendement Total Decrement 3.40 Fevrier 2026 - XS3156906847.pdf'},
+    {type:'TS',   label:'Term Sheet FR',       sub:'Docs réglementaires', file:'TS FR - NexAutocall Alexa Rendement Total Decrement 3.40 Fevrier 2026 - XS3156906847.pdf'},
+    {type:'TS',   label:'Term Sheet (Prelim)', sub:'Docs réglementaires', file:'Term sheet_26LEQ002438_Prelim_FR.pdf'},
+    {type:'FICHE',label:'Brochure',            sub:'Fiche produit',       file:'NexAutocall Alexa Rendement Total Decrement 3.40 Fevrier 2026 - XS3156906847 - Alexa.pdf'},
+  ]},
+  {isin:'XS3184584137',archive:true,nom:'NexAutocall Alexa BNP Paribas Pernod Ricard Janvier 2026',sj:'BNP/PERNOD RICARD',date:'Janvier 2026',
+   folder:'_ARCHIVES/15. BNP:PERNOD Janvier 26 (11,4%)',docs:[
+    {type:'KID',  label:'KID / DIC',   sub:'Docs réglementaires', file:'KID - NexAutocall Alexa BNP Paribas Pernod Ricard Janvier 2026 - XS3184584137.pdf'},
+    {type:'MC',   label:'Marché Cible',sub:'Docs réglementaires', file:'TM - NexAutocall Alexa BNP Paribas Pernod Ricard Janvier 2026 - XS3184584137.pdf'},
+    {type:'TS',   label:'Term Sheet',  sub:'Docs réglementaires', file:'TS - NexAutocall Alexa BNP Paribas Pernod Ricard Janvier 2026 - XS3184584137.pdf'},
+    {type:'FICHE',label:'Brochure',    sub:'Fiche produit',       file:'NexAutocall Alexa BNP Paribas Pernod Ricard Janvier 2026 - XS3184584137.pdf'},
+  ]},
+  {isin:'DE000UQ56383',archive:true,nom:'NexAutocall Alexa Rendement FDJ Décrément 1.78 Janvier 2026',sj:'FDJ',date:'Janvier 2026',
+   folder:'_ARCHIVES/16. FDJ Janvier 26',docs:[
+    {type:'KID',  label:'KID / DIC',     sub:'Docs réglementaires', file:'KID FR - NexAutocall Alexa Rendement FDJ Décrément 1.78 Janvier 2026 - DE000UQ56383.pdf'},
+    {type:'MC',   label:'Marché Cible',  sub:'Docs réglementaires', file:'MC - NexAutocall Alexa Rendement FDJ Décrément 1.78 Janvier 2026 - DE000UQ56383.pdf'},
+    {type:'TS',   label:'Term Sheet FR', sub:'Docs réglementaires', file:'TS FR - NexAutocall Alexa Rendement FDJ Décrément 1.78 Janvier 2026 - DE000UQ56383.pdf'},
+    {type:'FICHE',label:'Brochure',      sub:'Fiche produit',       file:'NexAutocall Alexa Rendement FDJ decrement 1.78 Janvier 2026 - DE000UQ56383.pdf'},
+  ]},
+  {isin:'XS3225156267',archive:true,nom:'Autocall Alexa FDJ 1.78€ Janvier 2026',sj:'FDJ',date:'Janvier 2026',
+   folder:'_ARCHIVES/17. FDJ BRENIER Janvier 26',docs:[
+    {type:'KID',label:'KID / DIC',   sub:'Docs réglementaires', file:'KID - Autocall Alexa FDJ 1.78€ Janvier 2026 - XS3225156267.pdf'},
+    {type:'MC', label:'Marché Cible',sub:'Docs réglementaires', file:'TM - Autocall Alexa FDJ 1.78€ Janvier 2026 - XS3225156267.pdf'},
+    {type:'TS', label:'Term Sheet',  sub:'Docs réglementaires', file:'TS - Autocall Alexa FDJ 1.78€ Janvier 2026 - XS3225156267.pdf'},
+  ]},
+  {isin:'XS3211252559',archive:true,nom:'Phoenix Alexa France Janvier 2026',sj:'OAT 10 ANS',date:'Janvier 2026',
+   folder:'_ARCHIVES/18. OAT 10 ans Janvier 26',docs:[
+    {type:'KID',  label:'KID / DIC',          sub:'Docs réglementaires', file:'KID - Phoenix Alexa France Janvier 2026 - XS3211252559.pdf'},
+    {type:'MC',   label:'Marché Cible',        sub:'Docs réglementaires', file:'MC - Phoenix Alexa France Janvier 2026 - XS3211252559.pdf'},
+    {type:'TS',   label:'Term Sheet EN',       sub:'Docs réglementaires', file:'TS EN - Phoenix Alexa France Janvier 2026 - XS3211252559.pdf'},
+    {type:'TS',   label:'Term Sheet (Prelim)', sub:'Docs réglementaires', file:'12Y Memory Phoenix term sheet - 09-12-2025.pdf'},
+    {type:'FICHE',label:'Brochure',            sub:'Fiche produit',       file:'Phoenix Alexa France Janvier 2026.pdf'},
+  ]},
+  {isin:'FR0014014YA5',archive:true,nom:'NexAutocall Alexa Rendement Scor Decrement 1.80 pts Janvier 2026',sj:'SCOR',date:'Janvier 2026',
+   folder:'_ARCHIVES/19. SCOR Janvier 26 Capriona',docs:[
+    {type:'KID',  label:'KID / DIC',   sub:'Docs réglementaires', file:'KID - NexAutocall Alexa Rendement Scor Decrement 1.80 pts Janvier 2026 - FR0014014YA5.pdf'},
+    {type:'MC',   label:'Marché Cible',sub:'Docs réglementaires', file:'TM - NexAutocall Alexa Rendement Scor Decrement 1.80 pts Janvier 2026 - FR0014014YA5.pdf'},
+    {type:'TS',   label:'Term Sheet',  sub:'Docs réglementaires', file:'TS - NexAutocall Alexa Rendement Scor Decrement 1.80 pts Janvier 2026 - FR0014014YA5.pdf'},
+    {type:'FICHE',label:'Brochure',    sub:'Fiche produit',       file:'NexAutocall Alexa Rendement Scor Decrement 1.80 pts Janvier 2026 - FR0014014YA5.pdf'},
+  ]},
+  {isin:'XS3157073159',archive:true,nom:'NexAlexa Scor Decrement 1.80 pts Janvier 2026',sj:'SCOR',date:'Janvier 2026',
+   folder:'_ARCHIVES/20. SCOR Janvier 26 GMS',docs:[
+    {type:'KID',  label:'KID / DIC',     sub:'Docs réglementaires', file:'KID - NexAlexa Scor Decrement 1.80 pts Janvier 2026 - XS3157073159.pdf'},
+    {type:'MC',   label:'Marché Cible',  sub:'Docs réglementaires', file:'MC - NexAlexa Scor Decrement 1.80 pts Janvier 2026 - XS3157073159.pdf'},
+    {type:'TS',   label:'Term Sheet EN', sub:'Docs réglementaires', file:'TS EN - NexAlexa Scor Decrement 1.80 pts Janvier 2026 - XS3157073159.pdf'},
+    {type:'TS',   label:'Term Sheet FR', sub:'Docs réglementaires', file:'TS FR - NexAlexa Scor Decrement 1.80 pts Janvier 2026 - XS3157073159.pdf'},
+    {type:'FICHE',label:'Brochure',      sub:'Fiche produit',       file:'NEXALEXA SCOR DECREMENT 1.80 JANVIER 2026 - XS3157073159.pdf'},
+  ]},
+  {isin:'XS3156939269',archive:true,nom:'NexAutocall Alexa Rendement Total Decrement 3.40 EUR Janvier 2026',sj:'TOTALENERGIES',date:'Janvier 2026',
+   folder:'_ARCHIVES/23. Total Phoenix Janvier 26',docs:[
+    {type:'KID',  label:'KID / DIC',          sub:'Docs réglementaires', file:'KID - NexAutocall Alexa Rendement Total Decrement 3.40 EUR Janvier 2026 - XS3156939269.pdf'},
+    {type:'MC',   label:'Marché Cible',        sub:'Docs réglementaires', file:'MC - NexAutocall Alexa Rendement Total Decrement 3.40 EUR Janvier 2026 - XS3156939269.pdf'},
+    {type:'TS',   label:'Term Sheet EN',       sub:'Docs réglementaires', file:'TS EN - NexAutocall Alexa Rendement Total Decrement 3.40 EUR Janvier 2026 - XS3156939269.pdf'},
+    {type:'TS',   label:'Term Sheet FR',       sub:'Docs réglementaires', file:'TS FR - NexAutocall Alexa Rendement Total Decrement 3.40 EUR Janvier 2026 - XS3156939269.pdf'},
+    {type:'TS',   label:'Term Sheet (Prelim)', sub:'Docs réglementaires', file:'Term sheet_26LEQ001892_Prelim_FR.pdf'},
+    {type:'FICHE',label:'Brochure',            sub:'Fiche produit',       file:'NexAutocall Alexa Rendement Total Decrement 3.40 EUR Janvier 2026 - XS3156939269 - Alexa.pdf'},
+  ]},
+  {isin:'XS3188986189',archive:true,nom:'NexAutocall Alexa BNP Paribas Pernod Ricard Décembre 2025',sj:'BNP/PERNOD RICARD',date:'Décembre 2025',
+   folder:'_ARCHIVES/13. BNP:PERNOD Décembre 25 (8%)',docs:[
+    {type:'KID',  label:'KID / DIC',     sub:'Docs réglementaires', file:'KID FR - NexAutocall Alexa BNP Paribas Pernod Ricard Décembre 2025 - XS3188986189.pdf'},
+    {type:'MC',   label:'Marché Cible',  sub:'Docs réglementaires', file:'MC - NexAutocall Alexa BNP Paribas Pernod Ricard Décembre 2025 - XS3188986189.pdf'},
+    {type:'TS',   label:'Term Sheet FR', sub:'Docs réglementaires', file:'TS FR - NexAutocall Alexa BNP Paribas Pernod Ricard Décembre 2025 - XS3188986189.pdf'},
+    {type:'FICHE',label:'Brochure',      sub:'Fiche produit',       file:'NexAutocall Alexa BNP Paribas Pernod Ricard Décembre 2025 - XS3188986189.pdf'},
+  ]},
+  {isin:'FRSG00017667',archive:true,nom:'NexTaux CMS G Décembre 2025',sj:'TAUX',date:'Décembre 2025',
+   folder:'_ARCHIVES/14. CMS Décembre 25 (Generali)',docs:[
+    {type:'KID',  label:'KID / DIC',  sub:'Docs réglementaires', file:'KID - NexTaux CMS G Décembre 2025 - FRSG00017667.pdf'},
+    {type:'TS',   label:'Term Sheet', sub:'Docs réglementaires', file:'TS - NexTaux CMS G Décembre 2025 - FRSG00017667.pdf'},
+    {type:'FICHE',label:'Brochure',   sub:'Docs réglementaires', file:'Brochure - NexTaux CMS G Décembre 2025 - FRSG00017667.pdf'},
+  ]},
+  {isin:'XS3156154299',archive:true,nom:'Autocall Alexa Scor Décrément 1.80 Décembre 2025',sj:'SCOR',date:'Décembre 2025',
+   folder:'_ARCHIVES/12. Scor BRENIER Décembre 25',docs:[
+    {type:'KID',  label:'KID / DIC',          sub:'Docs réglementaires', file:'KID - Autocall Alexa Scor Décrément 1.80 Décembre 2025 - XS3156154299.pdf'},
+    {type:'MC',   label:'Marché Cible',        sub:'Docs réglementaires', file:'MC - Autocall Alexa Scor Décrément 1.80 Décembre 2025 - XS3156154299.pdf'},
+    {type:'TS',   label:'Term Sheet FR',       sub:'Docs réglementaires', file:'TS FR - Autocall Alexa Scor Décrément 1.80 Décembre 2025 - XS3156154299.pdf'},
+    {type:'TS',   label:'Term Sheet (Prelim)', sub:'Docs réglementaires', file:'Term sheet_25LEQ082136_Prelim_EN.pdf'},
+    {type:'FICHE',label:'Brochure',            sub:'Fiche produit',       file:'Autocall Alexa Scor Décrément 1.80 Décembre 2025 - XS3156154299.pdf'},
+  ]},
+  {isin:'FRSG00016ZR7',archive:true,nom:'NexAutocall Alexa US Octobre 2025',sj:'INDICE US',date:'Octobre 2025',
+   folder:'_ARCHIVES/10. WOF US Octobre 25',docs:[
+    {type:'KID',  label:'KID / DIC',  sub:'Docs réglementaires', file:'KID-NexAutocall Alexa US Octobre 2025 - FRSG00016ZR7.pdf'},
+    {type:'TS',   label:'Term Sheet', sub:'Docs réglementaires', file:'TS - NexAutocall Alexa US Octobre 2025 - FRSG00016ZR7.pdf'},
+    {type:'FICHE',label:'Brochure',   sub:'Fiche Produit',       file:'NEXAUTOCALL ALEXA US OCTOBRE 2025.pdf'},
+  ]},
+  {isin:'FRIP00001RD7',archive:true,nom:'Phoenix Alexa France Octobre 2025',sj:'OAT 10 ANS',date:'Octobre 2025',
+   folder:'_ARCHIVES/9. OAT 10 ans Octobre 25',docs:[
+    {type:'KID',label:'KID / DIC',   sub:'Docs réglementaires', file:'KID - Phoenix Alexa France Octobre 25 - FRIP00001RD7.pdf'},
+    {type:'MC', label:'Marché Cible',sub:'Docs réglementaires', file:'MC - Phoenix Alexa France Octobre 25 - FRIP00001RD7.pdf'},
+    {type:'TS', label:'Term Sheet',  sub:'Docs réglementaires', file:'TS - Phoenix Alexa France Octobre 25 - FRIP00001RD7.pdf'},
+  ]},
+  {isin:'FR00140138U7',archive:true,nom:'Alexa Rendement Pernod Ricard 4.70€ Octobre 2025',sj:'PERNOD RICARD',date:'Octobre 2025',
+   folder:'_ARCHIVES/8. Pernod Ricard Octobre 25',docs:[
+    {type:'KID',  label:'KID / DIC',         sub:'Docs réglementaires', file:'KID - Alexa Rendement Pernod Ricard 4.70€ Octobre 2025 - FR00140138U7.pdf'},
+    {type:'MC',   label:'Marché Cible',       sub:'Docs réglementaires', file:'MC - Alexa Rendement Pernod Ricard 4.70€ Octobre 2025 - FR00140138U7.pdf'},
+    {type:'TS',   label:'Term Sheet',         sub:'Docs réglementaires', file:'TS - Alexa Rendement Pernod Ricard 4.70€ Octobre 2025 - FR00140138U7.pdf'},
+    {type:'TS',   label:'Product Term Sheet', sub:'Docs réglementaires', file:'Product Term Sheet_PHOENIX MO- Yeti  3_08 - 07 November 2035.pdf'},
+    {type:'FICHE',label:'Brochure',           sub:'Fiche produit',       file:'Alexa Rendement Pernod Ricard 4.70€ Octobre 2025.pdf'},
+  ]},
+  {isin:'XS3202150994',archive:true,nom:'Autocall Alexa Solvay 2.30€ Octobre 2025',sj:'SOLVAY',date:'Octobre 2025',
+   folder:'_ARCHIVES/11. Solvay et Pernod BRENIER Octobre 25',docs:[
+    {type:'KID',  label:'KID / DIC',   sub:'_Docs réglementaires', file:'KID-Autocall Alexa Solvay 2.30€ Octobre 2025 - XS3202150994.pdf'},
+    {type:'MC',   label:'Marché Cible',sub:'_Docs réglementaires', file:'MC - Autocall Alexa Solvay 2.30€ Octobre 2025 - XS3202150994.pdf'},
+    {type:'TS',   label:'Term Sheet',  sub:'_Docs réglementaires', file:'TS - Autocall Alexa Solvay 2.30€ Octobre 2025 - XS3202150994.pdf'},
+    {type:'FICHE',label:'Brochure',    sub:'Fiches produits',      file:'AUTOCALL ALEXA SOLVAY 2.30 € OCTOBRE 2025 - XS3202150994.pdf'},
+  ]},
+  {isin:'FRIP00001RV9',archive:true,nom:'Autocall Alexa Pernod 4.70€ Octobre 2025',sj:'PERNOD RICARD',date:'Octobre 2025',
+   folder:'_ARCHIVES/11. Solvay et Pernod BRENIER Octobre 25',docs:[
+    {type:'KID',  label:'KID / DIC',   sub:'_Docs réglementaires', file:'KID-Autocall Alexa Pernod 4.70€ Octobre 2025 -FRIP00001RV9.pdf'},
+    {type:'MC',   label:'Marché Cible',sub:'_Docs réglementaires', file:'MC- Autocall Alexa Pernod 4.70€ Octobre 2025 -FRIP00001RV9.pdf'},
+    {type:'TS',   label:'Term Sheet',  sub:'_Docs réglementaires', file:'TS- Autocall Alexa Pernod 4.70€ Octobre 2025 -FRIP00001RV9.pdf'},
+    {type:'FICHE',label:'Brochure',    sub:'Fiches produits',      file:'Autocall Alexa Pernod 4.70€ Octobre 2025 - FRIP00001RV9.pdf'},
+  ]},
+  {isin:'XS3125196587',archive:true,nom:'NexAutocall Alexa Rendement Solvay Decrement 2.40 pts Octobre 2025',sj:'SOLVAY',date:'Octobre 2025',
+   folder:'_ARCHIVES/6. Solvay Octobre 25',docs:[
+    {type:'KID',  label:'KID / DIC',     sub:'Docs réglementaires', file:'KID - NexAutocall Alexa Rendement Solvay Decrement 2.40 pts Octobre 2025 - XS3125196587.pdf'},
+    {type:'MC',   label:'Marché Cible',  sub:'Docs réglementaires', file:'TM - NexAutocall Alexa Rendement Solvay Decrement 2.40 pts Octobre 2025 - XS3125196587.pdf'},
+    {type:'TS',   label:'Term Sheet FR', sub:'Docs réglementaires', file:'TS FR - NexAutocall Alexa Rendement Solvay Decrement 2.40 pts Octobre 2025 - XS3125196587.pdf'},
+    {type:'FICHE',label:'Brochure',      sub:'Fiche Produit',       file:'NEXAUTOCALL ALEXA RENDEMENT SOLVAY DECREMENT 2.40 PTS OCTOBRE 2025 - XS3125196587.pdf'},
+  ]},
+  {isin:'XS3127358490',archive:true,nom:'NexAutocall Alexa Engie Décrément 1.20 Octobre 2025',sj:'ENGIE',date:'Octobre 2025',
+   folder:'_ARCHIVES/5. Engie Octobre 25 (Generali)',docs:[
+    {type:'KID',  label:'KID / DIC',     sub:'Docs réglementaires', file:'KID-NexAutocall Alexa Engie Décrément 1.20Eur Octobre 2025-XS3127358490.pdf'},
+    {type:'MC',   label:'Marché Cible',  sub:'Docs réglementaires', file:'MC-NexAutocall Alexa Engie Décrément 1.20Eur Octobre 2025-XS3127358490.pdf'},
+    {type:'TS',   label:'Term Sheet FR', sub:'Docs réglementaires', file:'TS FR-NexAutocall Alexa Engie Décrément 1.20Eur Octobre 2025-XS3127358490.pdf'},
+    {type:'FICHE',label:'Brochure',      sub:'Fiche Produit',       file:'NexAutocall Alexa Engie Décrément 1.20 Octobre 2025 -XS3127358490 .pdf'},
+  ]},
+  {isin:'XS3103320035',archive:true,nom:'Alexa Rendement FTSE Crédit Agricole Decrement 1.10 EUR Octobre 2025',sj:'CRÉDIT AGRICOLE',date:'Octobre 2025',
+   folder:'_ARCHIVES/4. Crédit Agricole Octobre 25',docs:[
+    {type:'FICHE',label:'Brochure',sub:'Fiche Produit', file:'Alexa Rendement FTSE Credit Agricole Decrement 1.10 EUR Octobre 2025 - XS3103320035.pdf'},
+  ]},
+  {isin:'FR0014012S63',archive:true,nom:'NexAutocall Trimestriel Dégressif Total 3.06€ G Novembre 2025',sj:'TOTALENERGIES',date:'Novembre 2025',
+   folder:'_ARCHIVES/7. Total Novembre 25 (Generali)',docs:[
+    {type:'KID',  label:'KID / DIC',   sub:'Docs réglementaires', file:'KID-NexAutocall Trimestriel Dégressif Total 3.06€ G Novembre 2025-FR0014012S63.pdf'},
+    {type:'MC',   label:'Marché Cible',sub:'Docs réglementaires', file:'MC-NexAutocall Trimestriel Dégressif Total 3.06€ G Novembre 2025-FR0014012S63.pdf'},
+    {type:'TS',   label:'Term Sheet',  sub:'Docs réglementaires', file:'TS-NexAutocall Trimestriel Dégressif Total 3.06€ G Novembre 2025-FR0014012S63.pdf'},
+    {type:'FICHE',label:'Brochure',    sub:'Fiche produit',       file:'BC-NexAutocall Trimestriel Dégressif Total 3.06€ G Novembre 2025-FR0014012S63.pdf'},
+  ]},
+  {isin:'XS3127359118',archive:true,nom:'NexAutocall Alexa Rendement Scor Décrément 1.60 Septembre 2025',sj:'SCOR',date:'Septembre 2025',
+   folder:'_ARCHIVES/3. Scor Septembre 2025',docs:[
+    {type:'KID',  label:'KID / DIC',     sub:'Docs réglementaires', file:'KID - NexAutocall Alexa Rendement Scor Décrément 1.60 Septembre 2025 - XS3127359118.pdf'},
+    {type:'MC',   label:'Marché Cible',  sub:'Docs réglementaires', file:'MC - NexAutocall Alexa Rendement Scor Décrément 1.60 Septembre 2025 - XS3127359118.pdf'},
+    {type:'TS',   label:'Term Sheet FR', sub:'Docs réglementaires', file:'TS FR - NexAutocall Alexa Rendement Scor Décrément 1.60 Septembre 2025 - XS3127359118.pdf'},
+    {type:'FICHE',label:'Brochure',      sub:'Fiche Produit',       file:'NexAutocall Alexa Rendement Scor Décrément 1.60 Septembre 2025 - XS3127359118.pdf'},
+  ]},
+  {isin:'FRIP00001P91',archive:true,nom:'Alexa Rendement Crédit Agricole D1.10€ Septembre 2025',sj:'CRÉDIT AGRICOLE',date:'Septembre 2025',
+   folder:'_ARCHIVES/2. Credit Agricole Septembre 2025',docs:[
+    {type:'KID',  label:'KID / DIC',   sub:'Docs réglementaires', file:'KID - ALEXA RENDEMENT CREDIT AGRICOLE D1.10€ SEPTEMBRE 2025 - FRIP00001P91.pdf'},
+    {type:'MC',   label:'Marché Cible',sub:'Docs réglementaires', file:'Marché Cible - ALEXA RENDEMENT CREDIT AGRICOLE D1.10€ SEPTEMBRE 2025 - FRIP00001P91.pdf'},
+    {type:'TS',   label:'Term Sheet',  sub:'Docs réglementaires', file:'TS - ALEXA RENDEMENT CREDIT AGRICOLE D1.10€ SEPTEMBRE 2025 - FRIP00001P91.pdf'},
+    {type:'FICHE',label:'Brochure',    sub:'Fiche Produit',       file:'Mémo Conseiller - ALEXA RENDEMENT CREDIT AGRICOLE D1.10€ SEPTEMBRE 2025.pdf'},
+  ]},
+];
+
+// ── DOCUMENTS TAB JS ──────────────────────────────────────────────────────
+let dSJFilter = new Set();
+
+function initDocsTab() {
+  DOCS.sort((a,b)=>{
+    if(a.archive!==b.archive) return a.archive?1:-1;
+    return dateKey(b.date)-dateKey(a.date);
+  });
+  const allSJs = [...new Set(DOCS.map(d=>d.sj))].sort();
+  msBuild('msDSJ', allSJs, dSJFilter, 'Tous sous-jacents', renderDocsTab);
+  renderDocsTab();
+}
+
+function renderDocsTab() {
+  const search      = (document.getElementById('docsSearch').value||'').toLowerCase();
+  const showArchive = document.getElementById('docsShowArchive').checked;
+  let list = DOCS;
+  if (!showArchive) list = list.filter(d=>!d.archive);
+  if (dSJFilter.size>0) list = list.filter(d=>dSJFilter.has(d.sj));
+  if (search) list = list.filter(d=>(d.nom+d.isin+d.sj).toLowerCase().includes(search));
+  document.getElementById('docsCountLbl').textContent = list.length + ' produit'+(list.length>1?'s':'');
+  document.getElementById('docsGrid').innerHTML = list.map(d=>{
+    const btns = (d.docs&&d.docs.length)
+      ? d.docs.map(doc=>{
+          const href = docHref(d.folder, doc.sub, doc.file);
+          return `<a class="doc-btn ${doc.type}" href="${href}" onclick="window.open(this.href);return false;" title="${doc.file}">${doc.label}</a>`;
+        }).join('')
+      : '<span class="doc-no-docs">Aucun document disponible</span>';
+    const arch = d.archive ? ' <span class="doc-archive-badge">Archive</span>' : '';
+    return `<div class="doc-card${d.archive?' archived':''}">
+      <div class="doc-card-head"><span class="doc-isin-badge">${d.isin}</span><span class="doc-card-title">${d.nom}${arch}</span></div>
+      <div class="doc-card-meta"><span class="doc-sj-chip">${d.sj}</span><span class="doc-date-chip">${d.date}</span></div>
+      <div class="doc-btns">${btns}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── RUN ONCE AT PAGE LOAD ─────────────────────────────────────────────────
+// Recalcule ps / ps_kg / ps_risques dans CLIENTS dès l'ouverture du fichier.
+// À refaire uniquement si un produit a été ajouté et que le fichier est réouvert.
+syncClientsFromProduits();
 
 </script>
 </body>
