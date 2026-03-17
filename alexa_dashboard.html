@@ -2834,6 +2834,10 @@ const DOCS = [
     {type:'TS',   label:'Term Sheet',  sub:'Docs réglementaires', file:'TS - TEMPO DEGRESSIF TOTALENERGIES 3,06 EUR MARS 2026 - FR1459ABB811.pdf'},
     {type:'FICHE',label:'Brochure',    sub:'Fiche produit',       file:'Brochure - TEMPO DEGRESSIF TOTALENERGIES 3,06 EUR MARS 2026 - FR1459ABB811.pdf'},
   ]},
+  {isin:'FR0014015TT2',archive:false,nom:'Phoenix Mémoire OAT 10 ans Avril 2026',sj:'OAT 10 ANS',date:'Avril 2026',
+   folder:'FR0014015TT2_Phoenix Mémoire OAT 10 ans Avril 2026',docs:[
+    {type:'FICHE',label:'Brochure', sub:null, file:'Phoenix Mémoire OAT 10 ans Avril 2026 - FR0014015TT2.pdf'},
+  ]},
   {isin:'FR0014016ZQ3',archive:false,nom:'NexAutocall Alexa Rendement Crédit Agricole Decrement 1.10 Mars 2026',sj:'CRÉDIT AGRICOLE',date:'Mars 2026',
    folder:'FR0014016ZQ3_NexAutocall Alexa Rendement Crédit Agricole Decrement 1.10 Mars 2026',docs:[
     {type:'KID',label:'KID / DIC',          sub:null, file:'KID - NexAutocall Alexa Rendement Crédit Agricole Decrement 1.10 Mars 2026 - FR0014016ZQ3.pdf'},
@@ -3172,7 +3176,7 @@ function patchCDCTO() {
 
   // 6. Ligne ISIN : ISIN OAT Avril
   var isinRow = CD_CTO.find(function(r){ return String(r[0]||'').trim() === 'ISIN'; });
-  if (isinRow) isinRow[22] = 'TBD';
+  if (isinRow) isinRow[22] = 'FR0014015TT2';
 }
 patchCDCTO();
 
@@ -3271,7 +3275,7 @@ patchCDCTO();
 // objectif = Alexa portion (550k) ; wlcAmt est auto-détecté depuis la ligne WLC du CD
 // WLC n'est PAS dans les clients — il est suivi via la ligne WLC du CD_CTO
 ENVELOPES.push({
-  isin:'TBD', nom:'OAT KG Mémoire Avril 2026', strike:'30/04/2026',
+  isin:'FR0014015TT2', nom:'OAT KG Mémoire Avril 2026', strike:'30/04/2026',
   month:'Avril 2026', partenaire:'NEXO', coupon:0.0935,
   objectif:600000, tot_env:600000, tot_int:0, tot_verse:0, tot_valide:0, uf:'4%',
   clients:[
