@@ -2750,7 +2750,9 @@ function docHref(folder, subfolder, file) {
     return 'file://' + parts.join('/');
   } else {
     // GitHub Pages : https://
-    const parts = [DOCS_BASE_WEB, enc(folder)];
+    // Les archives ont été poussées directement dans docs/ sans le préfixe _ARCHIVES/
+    const webFolder = folder.replace(/^_ARCHIVES\//, '');
+    const parts = [DOCS_BASE_WEB, enc(webFolder)];
     if (subfolder) parts.push(enc(subfolder));
     parts.push(encodeURIComponent(file));
     return parts.join('/');
