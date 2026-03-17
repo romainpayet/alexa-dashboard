@@ -1803,6 +1803,7 @@ const CPT_TYPE={
   '92200243772':'CTO',
   '93100229301':'CTO',
   '92200242884':'CTO',
+  '92200245530':'CTO',
   '2410-157243':'FAS',
   '92200242904':'CTO',
   '92200243464':'CTO',
@@ -3134,15 +3135,15 @@ function patchCDCTO() {
     if (cpt === 93100278401) row[21] =  -40000; // PAYET Romain : -40k (nouveau)
 
     // Valeurs OAT (index 22) — clients souscrits à l'OAT KG Mémoire Avril 2026 + WLC
-    if (cpt === 92200242431) row[22] = -100000; // GMS INVESTISSEMENT
-    if (cpt === 92200242103) row[22] = -120000; // DOCTEUR CHARLIE VERBRUGGEN
+    if (cpt === 92200242431) row[22] =       0; // GMS INVESTISSEMENT → 0
+    if (cpt === 92200242103) row[22] = -117000; // DOCTEUR CHARLIE VERBRUGGEN
     if (cpt === 92200242920) row[22] = -100000; // BROCHET Pierre-Edouard
     if (cpt === 93100229301) row[22] =  -50000; // BOUDEY Nathalie
     if (cpt === 92200242904) row[22] =  -25000; // SCI AGR 4
     if (cpt === 93100278401) row[22] =  -40000; // PAYET Romain
     if (cpt === 93100154601) row[22] =  -13000; // THOUEILLES Pierre
     if (cpt === 93100298301) row[22] =  -40000; // PAYET Laura
-    if (String(cpt||'').trim() === 'WLC')   row[22] = -50000; // WLC
+    if (String(cpt||'').trim() === 'WLC')   row[22] = 0; // WLC → 0 (objectif global 600k = 100% Alexa)
     if (cpt === 92200242884) row[22] = -15000; // CGA
 
     // Total #3 11% (index 11, non affecté par le splice) : WECK -35k → -30k
@@ -3175,6 +3176,46 @@ function patchCDCTO() {
 }
 patchCDCTO();
 
+// ── NOUVEAU CLIENT: GARAGE SINGER (92200245530) ──────────────────────────
+(function(){
+  // 1. CLIENTS
+  CLIENTS.push({
+    pp:'PM', cpt:'92200245530', client:'GARAGE SINGER', profil:'PRUDENT',
+    ps:0, ps_kg:0, ps_risques:0, fdg:0.008, ftc:0.0024, pas:0,
+    reporting:'NON', dernier:'', nom:'SINGER', email:'christianlerouvillois@gmail.com',
+    type_cpt:'Compte-titres', type_short:'CTO', qcc:0.5
+  });
+
+  // 2. EXPO (onglet Expo Clients)
+  EXPO.push({
+    cpt:'92200245530', type:'Compte-titres', client:'GARAGE SINGER', enc:0,
+    STELLANTIS:0, VOLKSWAGEN:0, MERCEDES:0, ENGIE:0, TAUX:0, SCOR:0,
+    'CREDIT AGRICOLE':0, BNP:0, ICADE:0, BOUYGUES:0, CARREFOUR:0,
+    'PERNOD RICARD':0, ENI:0, TOTAL:0, SOLVAY:0, FDJ:0, EDENRED:0,
+    'LVMH/SANOFI/TOTAL':0, 'LVMH/BNP/RENAULT':0, 'BNP/STELLANTIS':0,
+    'ARM/PDD':0, INDICE:0
+  });
+
+  // 3. CD_CTO (format post-patchCDCTO : 24 colonnes)
+  // indices : 0=cpt,1=nom,2=solde,3=new_cash_mars,4-9=produits,
+  //           10=fin_fev,11-17=produits,18=fin_mars,19=ca_mars25,
+  //           20=new_cash_avr,21=ca_avr_12,22=oat,23=dispo_avr
+  CD_CTO.push([
+    92200245530, 'GARAGE SINGER',
+    0,              // solde
+    0,              // new cash mars
+    0, 0, 0, 0, 0, 0, // produits indices 4-9
+    0,              // Fin Fev (index 10)
+    null, null, null, null, null, null, null, // produits indices 11-17
+    0,              // Fin Mars (index 18)
+    null,           // CA Mars 25 (index 19)
+    200000,         // New Cash Avr (index 20)
+    null,           // CA Avr. 12,1% (index 21)
+    -200000,        // OAT Avril 9,35% (index 22)
+    0               // Disponibilités Avril (index 23) = 0+200k-200k = 0
+  ]);
+})();
+
 // ── ENVELOPES: Patch CA Avr. 12,1% (FRIP00002CS5) ───────────────────────
 // GMS : 108k→198k, Charlie : 117k→120k, + Romain Payet 40k (nouveau)
 (function(){
@@ -3202,16 +3243,40 @@ patchCDCTO();
   });
 })();
 
+// ── ENVELOPES: Dupouy — DDA signé sur Carrefour Mars 2026 (FRIP000020O8) ─
+(function(){
+  var env = ENVELOPES.find(function(e){ return e.isin === 'FRIP000020O8'; });
+  if (!env) return;
+  env.clients.forEach(function(c){
+    if ((c.nom||'').toUpperCase().indexOf('DUPOUY') !== -1) {
+      c.de = 'OUI'; c.ds = 'OUI';
+    }
+  });
+})();
+
+// ── ENVELOPES: Aussudre — DDA signés (ds:'OUI') sur produits Generali ────
+(function(){
+  ['FR1459ABB811','FR1459ABC009'].forEach(function(isin){
+    var env = ENVELOPES.find(function(e){ return e.isin === isin; });
+    if (!env) return;
+    env.clients.forEach(function(c){
+      if ((c.nom||'').toUpperCase().indexOf('AUSSUDRE') !== -1) {
+        c.de = 'OUI'; c.ds = 'OUI';
+      }
+    });
+  });
+})();
+
 // ── ENVELOPES: Ajoute OAT KG Mémoire Avril 2026 ──────────────────────────
 // objectif = Alexa portion (550k) ; wlcAmt est auto-détecté depuis la ligne WLC du CD
 // WLC n'est PAS dans les clients — il est suivi via la ligne WLC du CD_CTO
 ENVELOPES.push({
   isin:'TBD', nom:'OAT KG Mémoire Avril 2026', strike:'30/04/2026',
   month:'Avril 2026', partenaire:'NEXO', coupon:0.0935,
-  objectif:550000, tot_env:483000, tot_int:0, tot_verse:0, tot_valide:0, uf:'4%',
+  objectif:600000, tot_env:600000, tot_int:0, tot_verse:0, tot_valide:0, uf:'4%',
   clients:[
-    {ct:'92200242431', nom:'GMS INVESTISSEMENT',         int:100000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
-    {ct:'92200242103', nom:'DOCTEUR CHARLIE VERBRUGGEN', int:120000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
+    {ct:'92200242431', nom:'GMS INVESTISSEMENT',         int:     0, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
+    {ct:'92200242103', nom:'DOCTEUR CHARLIE VERBRUGGEN', int:117000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
     {ct:'92200242920', nom:'BROCHET Pierre-Edouard',     int:100000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
     {ct:'93100229301', nom:'BOUDEY Nathalie',            int: 50000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
     {ct:'92200242904', nom:'SCI AGR 4',                  int: 25000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
@@ -3219,6 +3284,7 @@ ENVELOPES.push({
     {ct:'93100154601', nom:'THOUEILLES Pierre',          int: 13000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
     {ct:'93100298301', nom:'PAYET Laura',                int: 40000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
     {ct:'92200242884', nom:'COMPAGNIE DE GESTION D\'AQUITAINE', int: 15000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
+    {ct:'92200245530', nom:'GARAGE SINGER',                    int:200000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
   ]
 });
 
