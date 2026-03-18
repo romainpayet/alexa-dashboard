@@ -539,7 +539,7 @@ const PRODUITS=[
   {t:0,pi:33,cpt:'92200243772',nom:'LMR FINANCES',ct:'Compte-titres',enc:150000,uf:'',ca:''},
   {t:0,pi:33,cpt:'93100229301',nom:'BOUDEY Nathalie',ct:'Compte-titres',enc:50000,uf:'',ca:''},
   {t:0,pi:33,cpt:'93100174601',nom:'PAYET Alain',ct:'Compte-titres',enc:100000,uf:'',ca:''},
-  {t:1,i:34,isin:'DE000UP7QNA0',exit:'',nom:'NEXAUTOCALL ALEXA RENDEMENT ENGIE 1.20 EUR MARS 25',sj:'ENGIE',sec:'ENERGIE',bk:'NEXO',pays:'ETRANGER',enc:500000,uf:0.05,ca:25000,ds:'17/03/2025',str_:14.39,dec:1.2,tx:0.1,cp:'TRIMESTRIELS',nc:1,bc:-0.2,br:0,pc:-0.6,dg:-0.01,pl:-0.2,ab:0,dr:0,nb:8},
+  {t:1,i:34,isin:'DE000UP7QNA0',exit:'EXIT',nom:'NEXAUTOCALL ALEXA RENDEMENT ENGIE 1.20 EUR MARS 25',sj:'ENGIE',sec:'ENERGIE',bk:'NEXO',pays:'ETRANGER',enc:500000,uf:0.05,ca:25000,ds:'17/03/2025',str_:14.39,dec:1.2,tx:0.1,cp:'TRIMESTRIELS',nc:1,bc:-0.2,br:0,pc:-0.6,dg:-0.01,pl:-0.2,ab:0,dr:0,nb:8},
   {t:0,pi:34,cpt:'92200244094',nom:'TRESCO',ct:'Compte-titres',enc:100000,uf:'',ca:''},
   {t:0,pi:34,cpt:'92200243772',nom:'LMR FINANCES',ct:'Compte-titres',enc:100000,uf:'',ca:''},
   {t:0,pi:34,cpt:'93100103401',nom:'REGLAT André',ct:'Compte-titres',enc:10000,uf:'',ca:''},
@@ -548,7 +548,7 @@ const PRODUITS=[
   {t:0,pi:34,cpt:'93100229301',nom:'BOUDEY Nathalie',ct:'Compte-titres',enc:100000,uf:'',ca:''},
   {t:0,pi:34,cpt:'93100181101',nom:'BURGAUD Jerome',ct:'Compte-titres',enc:15000,uf:'',ca:''},
   {t:0,pi:34,cpt:'92200242431',nom:'GMS INVESTISSEMENT',ct:'Compte-titres',enc:100000,uf:'',ca:''},
-  {t:1,i:35,isin:'DE000UP77AR3',exit:'',nom:'NEXAUTOCALL ALEXA ENGIE 1.2 EUR MARS 25',sj:'ENGIE',sec:'ENERGIE',bk:'NEXO',pays:'FRANCE',enc:423000,uf:0.05,ca:21150,ds:'17/03/2025',str_:14.39,dec:1.2,tx:0.12,cp:'RAPPEL',nc:1,bc:'n.a',br:0,pc:-0.6,dg:-0.01,pl:0,ab:0,dr:0,nb:8},
+  {t:1,i:35,isin:'DE000UP77AR3',exit:'EXIT',nom:'NEXAUTOCALL ALEXA ENGIE 1.2 EUR MARS 25',sj:'ENGIE',sec:'ENERGIE',bk:'NEXO',pays:'FRANCE',enc:423000,uf:0.05,ca:21150,ds:'17/03/2025',str_:14.39,dec:1.2,tx:0.12,cp:'RAPPEL',nc:1,bc:'n.a',br:0,pc:-0.6,dg:-0.01,pl:0,ab:0,dr:0,nb:8},
   {t:0,pi:35,cpt:'93100229301',nom:'BOUDEY Nathalie',ct:'Compte-titres',enc:75000,uf:'',ca:''},
   {t:0,pi:35,cpt:'93100154601',nom:'THOUEILLES Pierre',ct:'Compte-titres',enc:11000,uf:'',ca:''},
   {t:0,pi:35,cpt:'92200242906',nom:'SCI L C M',ct:'Compte-titres',enc:3000,uf:'',ca:''},
@@ -3297,13 +3297,6 @@ ENVELOPES.push({
     {ct:'92200245530', nom:'GARAGE SINGER',                    int:200000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
   ]
 });
-
-// ── PRODUITS EXIT : pi=34 (DE000UP7QNA0 Engie Mars 25) + pi=35 (DE000UP77AR3 Engie Mars 25)
-(function(){
-  PRODUITS.forEach(function(row){
-    if(row.t===1 && (row.i===34 || row.i===35)) row.exit='EXIT';
-  });
-})();
 
 // ── EXPO : mise à jour encours + % ENGIE suite à l'exit des produits 34 & 35
 (function(){
