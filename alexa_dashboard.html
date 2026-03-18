@@ -3298,6 +3298,31 @@ ENVELOPES.push({
   ]
 });
 
+// ── PRODUITS EXIT : pi=34 (DE000UP7QNA0 Engie Mars 25) + pi=35 (DE000UP77AR3 Engie Mars 25)
+(function(){
+  PRODUITS.forEach(function(row){
+    if(row.t===1 && (row.i===34 || row.i===35)) row.exit='EXIT';
+  });
+})();
+
+// ── EXPO : mise à jour encours + % ENGIE suite à l'exit des produits 34 & 35
+(function(){
+  EXPO.forEach(function(c){
+    if(c.cpt==='92200244094'){c.enc=705000;c.ENGIE=0;c.STELLANTIS=14.18;c.CARREFOUR=21.27;c.SOLVAY=2.13;c['LVMH/BNP/RENAULT']=14.18;c.INDICE=14.18;c.TAUX=0;}
+    if(c.cpt==='92200243772'){c.enc=533000;c.ENGIE=0;c.TAUX=28.15;c.CARREFOUR=33.4;c.SOLVAY=4.69;c.FDJ=8.46;}
+    if(c.cpt==='93100103401'){c.enc=260000;c.ENGIE=0;c.MERCEDES=19.23;c.ENI=9.62;c.TOTAL=9.62;c.FDJ=15.38;c.EDENRED=21.15;}
+    if(c.cpt==='92200242906'){c.enc=156000;c.ENGIE=0;c.SCOR=12.82;c.CARREFOUR=64.11;}
+    if(c.cpt==='92200242904'){c.enc=345000;c.ENGIE=0;c.MERCEDES=14.48;c.SCOR=8.7;c.CARREFOUR=21.74;c.TOTAL=5.8;c.SOLVAY=7.25;c.INDICE=20.29;}
+    if(c.cpt==='93100229301'){c.enc=315000;c.ENGIE=0;c.TAUX=15.87;c.CARREFOUR=31.75;}
+    if(c.cpt==='93100181101'){c.enc=80000;c.ENGIE=0;c.TOTAL=6.25;c['LVMH/BNP/RENAULT']=75.0;}
+    if(c.cpt==='92200242431'){c.enc=3955000;c.ENGIE=0;c.STELLANTIS=19.46;c.VOLKSWAGEN=6.32;c.TAUX=2.53;c.SCOR=12.64;c.CARREFOUR=2.41;c.TOTAL=10.74;c.SOLVAY=14.03;c.FDJ=6.37;c.EDENRED=15.17;}
+    if(c.cpt==='93100154601'){c.enc=189000;c.ENGIE=0;c.VOLKSWAGEN=20.63;c.TOTAL=26.46;c.SOLVAY=13.23;}
+    if(c.cpt==='92200242920'){c.enc=179000;c.ENGIE=0;c.TAUX=55.87;c.CARREFOUR=44.14;}
+    if(c.cpt==='92200242103'){c.enc=1804000;c.ENGIE=2.93;c.STELLANTIS=16.08;c.VOLKSWAGEN=2.16;c.TAUX=2.77;c.SCOR=16.63;c.CARREFOUR=7.76;c.ENI=4.16;c.TOTAL=5.54;c.SOLVAY=16.91;c.FDJ=5.54;c.INDICE=1.39;}
+    if(c.cpt==='92200243231'){c.enc=148000;c.ENGIE=0;c.STELLANTIS=33.78;c.TOTAL=18.91;c.FDJ=13.51;}
+  });
+})();
+
 // ── RUN ONCE AT PAGE LOAD ─────────────────────────────────────────────────
 // Recalcule ps / ps_kg / ps_risques dans CLIENTS dès l'ouverture du fichier.
 // À refaire uniquement si un produit a été ajouté et que le fichier est réouvert.
