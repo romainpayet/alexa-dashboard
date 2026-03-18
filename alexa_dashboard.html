@@ -3220,6 +3220,12 @@ patchCDCTO();
   ]);
 })();
 
+// ── ENVELOPES: Renomme FRIP00002EK8 ──────────────────────────────────────
+(function(){
+  var env = ENVELOPES.find(function(e){ return e.isin === 'FRIP00002EK8'; });
+  if (env) env.nom = 'NexAutocall Alexa Rendement Sanofi Décrément 3.92 Mars 2026';
+})();
+
 // ── ENVELOPES: Patch CA Avr. 12,1% (FRIP00002CS5) ───────────────────────
 // GMS : 108k→198k, Charlie : 117k→120k, + Romain Payet 40k (nouveau)
 (function(){
