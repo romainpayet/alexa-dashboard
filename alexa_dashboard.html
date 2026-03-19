@@ -140,6 +140,10 @@ tr.cr{display:none} tr.cr.open{display:table-row}
 .doc-no-docs{font-size:12px;color:#9ca3af;font-style:italic}
 .docs-count-lbl{font-size:12px;color:#6b7280;margin-left:auto}
 
+/* ── ENVELOPES DETAIL TABLE : centrage colonnes Versé → Frais OK ───── */
+#env-detail-wrap th:nth-child(n+4),
+#env-detail-wrap td:nth-child(n+4){text-align:center!important}
+
 /* ── RESPONSIVE MOBILE (iPhone / ≤768px) ───────────────────────────── */
 @media (max-width:768px){
   /* Pleine hauteur dynamique (évite le saut avec l'adresse bar) */
