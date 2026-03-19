@@ -140,6 +140,101 @@ tr.cr{display:none} tr.cr.open{display:table-row}
 .doc-no-docs{font-size:12px;color:#9ca3af;font-style:italic}
 .docs-count-lbl{font-size:12px;color:#6b7280;margin-left:auto}
 
+/* ── RESPONSIVE MOBILE (iPhone / ≤768px) ───────────────────────────── */
+@media (max-width:768px){
+  /* Pleine hauteur dynamique (évite le saut avec l'adresse bar) */
+  body{height:100dvh;overflow:hidden}
+  #app{flex-direction:column-reverse;height:100dvh}
+
+  /* ── Sidebar → barre de navigation en bas ── */
+  .sb{width:100%!important;min-width:0!important;height:auto;flex-direction:row;
+      border-right:none;border-top:1px solid var(--sbb);flex-shrink:0}
+  .sb.col{width:100%!important;min-width:0!important}
+  .sb-hd,.sb-ft{display:none!important}
+  .sb-nav{flex-direction:row;padding:3px 4px;gap:1px;width:100%;
+          justify-content:space-around;overflow-x:auto;flex:1}
+  .nb{flex-direction:column;gap:1px;padding:5px 6px;font-size:10px;
+      min-width:48px;justify-content:center;text-align:center;white-space:nowrap}
+  .nb span:not(.nb-ic){display:block!important;font-size:9px}
+  .nb-ic{font-size:18px;width:auto}
+  /* Reset mode réduit (col) pour mobile */
+  .sb.col .nb{justify-content:center;padding:5px 6px}
+  .sb.col .nb span:not(.nb-ic){display:block!important}
+  .sb.col .nb-ic{font-size:18px}
+
+  /* ── Zone principale ── */
+  .main{flex:1;min-height:0;overflow:hidden}
+  .tab{padding:10px}
+
+  /* ── Dashboard : display:block pour scroll vertical libre ──────────────
+     Sans ça, .tab.active{display:flex} + flex-shrink:1 (défaut) comprime
+     toutes les chart-rows pour rentrer dans la hauteur du viewport →
+     graphiques tronqués + impossible de scroller.
+     display:block laisse chaque rangée à sa hauteur naturelle et le
+     tab scroll normalement via overflow-y:auto hérité. */
+  #tab-dashboard.active{display:block!important;overflow-y:auto;height:100%}
+  /* KPIs */
+  .kpi-row{grid-template-columns:repeat(3,1fr)!important;gap:7px;margin-bottom:10px}
+  .kpi{padding:9px 10px}
+  .kpi-val{font-size:14px}
+  .kpi-lbl{font-size:9px}
+  /* Empiler les rangées de graphiques en colonne unique */
+  .cr2,.cr3{grid-template-columns:1fr!important}
+  /* Chart-row : clip horizontal uniquement (pas overflow-y qui tronquerait) */
+  .chart-row{overflow:hidden;margin-bottom:10px}
+  /* min-width:0 évite l'overflow des grid-items sans casser le sizing Chart.js */
+  .cc{min-width:0}
+  /* PAS de overflow:hidden sur .cv : laisser le canvas s'afficher en pleine hauteur */
+
+  /* ── Tableaux : scroll horizontal ── */
+  .tc{flex-wrap:wrap;padding:7px 10px;gap:5px}
+  .si{min-width:0;width:100%}
+
+  /* ── Envelopes : scroll vertical de tout l'onglet ── */
+  /* Passe le tab en block scroll : cards + détail se scrollent ensemble */
+  #tab-enveloppes{overflow-y:auto!important}
+  #tab-enveloppes.active{display:block!important;height:100%}
+  #env-month-tabs,#env-month-kpis{gap:4px}
+  #env-cards{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))!important}
+  /* Détail envelope : sort du flex, s'étend à sa hauteur naturelle */
+  #env-detail-wrap{
+    flex:none!important;
+    height:auto!important;
+    overflow:visible!important;
+    margin-top:8px;
+  }
+  /* .tw a overflow:hidden par défaut → on override */
+  #env-detail-wrap.tw{overflow:visible!important}
+  /* .ts (wrapper table) : scroll horizontal, hauteur auto (plus de flex:1) */
+  #env-detail-wrap > .ts{
+    overflow-x:auto!important;
+    overflow-y:visible!important;
+    flex:none!important;
+    height:auto!important;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  /* ── Envelopes mobile-only : masquer Export Excel + badge VERSÉ% ── */
+  #envExportBtn{display:none!important}
+  .env-pct-badge{display:none!important}
+  /* ISIN : retirer la contrainte de largeur pour afficher l'ISIN complet */
+  .env-isin-lbl{max-width:none!important;overflow:visible!important;text-overflow:clip!important}
+
+  /* ── Expo Clients mobile-only ── */
+  /* 1. Cacher colonne Compte (nth-child 1) */
+  #tblE th:nth-child(1),#tblE td:nth-child(1){display:none!important}
+  /* 2. Recaler Nom Client (col 2) à left:0 puisque col 1 est cachée */
+  #tblE th:nth-child(2),#tblE td:nth-child(2){left:0!important}
+  /* 3. Défreeze Encours (col 3) */
+  #tblE th:nth-child(3),#tblE td:nth-child(3){position:static!important;left:auto!important;z-index:1!important}
+  #tblE thead th:nth-child(3){position:static!important;left:auto!important;z-index:2!important}
+
+  /* ── Documents ── */
+  .docs-grid{grid-template-columns:1fr!important;padding:10px!important}
+  .docs-toolbar{padding:8px 10px;gap:6px}
+  .doc-card{padding:12px}
+}
+
 </style>
 </head>
 <body>
@@ -2062,7 +2157,7 @@ function renderEnvMonthTabs(){
       const active=m===envMonth;
       return `<button onclick="setEnvMonth('${m}')" style="padding:4px 12px;border-radius:20px;border:2px solid ${active?'#2563eb':'#d9dde3'};background:${active?'#2563eb':'#fff'};color:${active?'#fff':'#374151'};font-size:12px;font-weight:${active?'700':'500'};cursor:pointer;transition:all .15s">${m}</button>`;
     }).join('')
-    +'<button onclick="exportEnvToExcel()" style="margin-left:auto;padding:4px 14px;font-size:11px;font-weight:700;background:#1e3a5f;color:#fff;border:none;border-radius:5px;cursor:pointer;white-space:nowrap">⬇ Export Excel</button>';
+    +'<button onclick="exportEnvToExcel()" style="margin-left:auto;padding:4px 14px;font-size:11px;font-weight:700;background:#1e3a5f;color:#fff;border:none;border-radius:5px;cursor:pointer;white-space:nowrap" id="envExportBtn">⬇ Export Excel</button>';
 }
 
 function renderEnvMonthKpis(){
@@ -2142,8 +2237,8 @@ function renderEnvCards(){
     const bgCol = selected?'#f0f6ff':'#fff';
     return `<div onclick="selEnv(${i})" style="background:${bgCol};border:2px solid ${borderCol};border-radius:8px;padding:8px 10px;cursor:pointer;box-shadow:${shadowCol};transition:all .15s">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:4px">
-        <span style="font-size:8.5px;font-family:monospace;color:#6b7280;background:#f3f4f6;padding:1px 5px;border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px">${esc(e.isin)}</span>
-        <span class="bdg ${pctV>=100?'bgr':pctV>=50?'bam':'bgy'}" style="font-size:9px;padding:1px 5px;white-space:nowrap">Versé ${pctV}%</span>
+        <span class="env-isin-lbl" style="font-size:8.5px;font-family:monospace;color:#6b7280;background:#f3f4f6;padding:1px 5px;border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px">${esc(e.isin)}</span>
+        <span class="bdg env-pct-badge ${pctV>=100?'bgr':pctV>=50?'bam':'bgy'}" style="font-size:9px;padding:1px 5px;white-space:nowrap">Versé ${pctV}%</span>
       </div>
       <div style="font-size:11px;font-weight:700;color:#1e3a5f;line-height:1.3;margin-bottom:5px">${esc(shortNom)}</div>
       <div style="display:flex;gap:8px;font-size:9.5px;color:#6b7280;margin-bottom:5px;flex-wrap:wrap">
@@ -3320,6 +3415,30 @@ ENVELOPES.push({
 // Recalcule ps / ps_kg / ps_risques dans CLIENTS dès l'ouverture du fichier.
 // À refaire uniquement si un produit a été ajouté et que le fichier est réouvert.
 syncClientsFromProduits();
+
+// ── MOBILE : force Chart.js resize après stabilisation du layout ───────────
+// renderDashboard() s'exécute au chargement, AVANT que le layout mobile
+// (sidebar → bottom bar) soit calculé par le navigateur.
+// Les graphiques dans cr2/cr3 reçoivent width=0 et ne s'affichent pas.
+// Double requestAnimationFrame : attend 2 frames de peinture pour que
+// le layout soit stable, puis force un resize() sur toutes les instances.
+if (window.innerWidth <= 768) {
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      try {
+        Object.values(Chart.instances).forEach(function(c) { c.resize(); });
+      } catch(e) {}
+    });
+  });
+  // Idem à l'orientation change (retournement de téléphone)
+  window.addEventListener('orientationchange', function() {
+    setTimeout(function() {
+      try {
+        Object.values(Chart.instances).forEach(function(c) { c.resize(); });
+      } catch(e) {}
+    }, 200);
+  });
+}
 
 </script>
 </body>
