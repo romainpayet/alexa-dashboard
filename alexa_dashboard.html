@@ -2714,7 +2714,7 @@ function renderCDTable(){
   }).join('');
 
   // Écart row: objectif - |grandTotal| for new product columns only
-  const CD_OBJECTIFS_CTO = {11:650000, 12:850000, 13:575000, 14:500000, 15:500000, 16:1000000, 17:500000, 21:1000000, 22:600000};
+  const CD_OBJECTIFS_CTO = {11:650000, 12:850000, 13:575000, 14:500000, 15:500000, 16:1000000, 17:500000, 21:1000000, 22:880000};
   const CD_OBJECTIFS_GEN = {};
   const cdObjectifs = cdView==='cto' ? CD_OBJECTIFS_CTO : CD_OBJECTIFS_GEN;
 
@@ -3252,6 +3252,9 @@ function patchCDCTO() {
     if (cpt === 92200242915) row[21] =  -43000; // COLOMBINI Frederic : -43k
     if (cpt === 93100136001) row[21] =  -20000; // ALTER EGO HOLDING : -20k
 
+    // New Cash 04/26 (index 20) — apports supplémentaires en cash d'avril
+    if (cpt === 93100174601) row[20] = (typeof row[20]==='number' ? row[20] : 0) + 100000; // PAYET Alain : +100k
+
     // Valeurs OAT (index 22) — clients souscrits à l'OAT KG Mémoire Avril 2026 + WLC
     if (cpt === 92200242431) row[22] =       0; // GMS INVESTISSEMENT → 0
     if (cpt === 92200242103) row[22] = -117000; // DOCTEUR CHARLIE VERBRUGGEN
@@ -3263,6 +3266,7 @@ function patchCDCTO() {
     if (cpt === 93100298301) row[22] =  -40000; // PAYET Laura
     if (String(cpt||'').trim() === 'WLC')   row[22] = 0; // WLC → 0 (objectif global 600k = 100% Alexa)
     if (cpt === 92200242884) row[22] = -15000; // CGA
+    if (cpt === 93100174601) row[22] = -100000; // PAYET Alain
 
     // Total #3 11% (index 11, non affecté par le splice) : WECK -35k → -30k
     if (cpt === 92200243302) row[11] = -30000; // WECK Christophe
@@ -3338,6 +3342,46 @@ patchCDCTO();
   ]);
 })();
 
+// ── NOUVEAU CLIENT: LAURENT Isabelle (TBC) ───────────────────────────────
+(function(){
+  // 1. CLIENTS
+  CLIENTS.push({
+    pp:'PP', cpt:'TBC', client:'LAURENT Isabelle', profil:'PRUDENT',
+    ps:0, ps_kg:0, ps_risques:0, fdg:0.008, ftc:0.0028, pas:0.314,
+    reporting:'NON', dernier:'', nom:'LAURENT', email:'',
+    type_cpt:'Compte-titres', type_short:'CTO', qcc:0.3
+  });
+
+  // 2. EXPO (onglet Expo Clients)
+  EXPO.push({
+    cpt:'TBC', type:'Compte-titres', client:'LAURENT Isabelle', enc:0,
+    STELLANTIS:0, VOLKSWAGEN:0, MERCEDES:0, ENGIE:0, TAUX:0, SCOR:0,
+    'CREDIT AGRICOLE':0, BNP:0, ICADE:0, BOUYGUES:0, CARREFOUR:0,
+    'PERNOD RICARD':0, ENI:0, TOTAL:0, SOLVAY:0, FDJ:0, EDENRED:0,
+    'LVMH/SANOFI/TOTAL':0, 'LVMH/BNP/RENAULT':0, 'BNP/STELLANTIS':0,
+    'ARM/PDD':0, INDICE:0
+  });
+
+  // 3. CD_CTO (format post-patchCDCTO : 24 colonnes)
+  // indices : 0=cpt,1=nom,2=solde,3=new_cash_mars,4-9=produits,
+  //           10=fin_fev,11-17=produits,18=fin_mars,19=ca_mars25,
+  //           20=new_cash_avr,21=ca_avr_12,22=oat,23=dispo_avr
+  CD_CTO.push([
+    'TBC', 'LAURENT Isabelle',
+    0,              // solde
+    0,              // new cash mars
+    0, 0, 0, 0, 0, 0, // produits indices 4-9
+    0,              // Fin Fev (index 10)
+    null, null, null, null, null, null, null, // produits indices 11-17
+    0,              // Fin Mars (index 18)
+    null,           // CA Mars 25 (index 19)
+    180000,         // New Cash Avr (index 20) : +180k
+    null,           // CA Avr. 12,1% (index 21)
+    -180000,        // OAT Avril 9,35% (index 22) : -180k
+    0               // Disponibilités Avril (index 23) = 0+180k-180k = 0
+  ]);
+})();
+
 // ── ENVELOPES: Renomme FRIP00002EK8 ──────────────────────────────────────
 (function(){
   var env = ENVELOPES.find(function(e){ return e.isin === 'FRIP00002EK8'; });
@@ -3409,9 +3453,8 @@ patchCDCTO();
 ENVELOPES.push({
   isin:'FR0014015TT2', nom:'Phoenix Mémoire OAT 10 ans Avril 2026', strike:'30/04/2026',
   month:'Avril 2026', partenaire:'NEXO', coupon:0.0935,
-  objectif:600000, tot_env:600000, tot_int:0, tot_verse:0, tot_valide:0, uf:'4%',
+  objectif:880000, tot_env:880000, tot_int:0, tot_verse:0, tot_valide:0, uf:'4%',
   clients:[
-    {ct:'92200242431', nom:'GMS INVESTISSEMENT',         int:     0, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
     {ct:'92200242103', nom:'DOCTEUR CHARLIE VERBRUGGEN', int:117000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
     {ct:'92200242920', nom:'BROCHET Pierre-Edouard',     int:100000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
     {ct:'93100229301', nom:'BOUDEY Nathalie',            int: 50000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
@@ -3421,6 +3464,8 @@ ENVELOPES.push({
     {ct:'93100298301', nom:'PAYET Laura',                int: 40000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
     {ct:'92200242884', nom:'COMPAGNIE DE GESTION D\'AQUITAINE', int: 15000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
     {ct:'92200245530', nom:'GARAGE SINGER',                    int:200000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
+    {ct:'93100174601', nom:'PAYET Alain',                      int:100000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
+    {ct:'TBC',         nom:'LAURENT Isabelle',                 int:180000, vf:'', vr:0, dv:'', de:'', ds:'', fk:''},
   ]
 });
 
