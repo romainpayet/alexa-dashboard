@@ -1053,9 +1053,9 @@ const PRODUITS=[
   {t:0,pi:79,cpt:'92200243273',nom:'GHIZZARDI Alexandre',ct:'Compte-titres',enc:25000,uf:'',ca:''},
   {t:1,i:80,isin:'XS3156906847',exit:'',nom:'NEXAUTOCALL ALEXA RENDEMENT TOTAL DEC 3.40 FEVRIER 2026',sj:'TOTAL',sec:'ENERGIE',bk:'NEXO',pays:'ETRANGER',enc:485000,uf:0.041,ca:19885,ds:'27/02/2026',str_:53.45,dec:3.4,tx:0.11,cp:'TRIMESTRIELS',nc:1,bc:-0.2,br:0,pc:-0.5,dg:-0.005,pl:-0.2,ab:0,dr:0,nb:4},
   {t:0,pi:80,cpt:'92200242431',nom:'GMS INVESTISSEMENT',ct:'Compte-titres',enc:375000,uf:'',ca:''},
-  {t:0,pi:80,cpt:'92200242915',nom:'COLOMBINI Frederic',ct:'Compte-titres',enc:50000,uf:'',ca:''},
-  {t:0,pi:80,cpt:'92200242162',nom:'SCI KLEBER HOEPFFNER',ct:'Compte-titres',enc:50000,uf:'',ca:''},
-  {t:0,pi:80,cpt:'93100136001',nom:'ALTER EGO HOLDING',ct:'Compte-titres',enc:10000,uf:'',ca:''},
+  {t:0,pi:80,cpt:'2407-156052',nom:'REGLAT Laurent',ct:'FAS Lombard',enc:50000,uf:'',ca:''},
+  {t:0,pi:80,cpt:'93100278401',nom:'PAYET Romain',ct:'Compte-titres',enc:50000,uf:'',ca:''},
+  {t:0,pi:80,cpt:'92200245041',nom:'SEL DR GUEMMAR',ct:'Compte-titres',enc:10000,uf:'',ca:''},
   {t:1,i:81,isin:'XS3255759303',exit:'',nom:'NOTE TAUX ESPAGNE CAPRIONA 2026',sj:'TAUX',sec:'AUTRES',bk:'NEXO',pays:'ETRANGER',enc:500000,uf:0.02,ca:10000,ds:'17/02/2026',str_:'n.a',dec:'n.a',tx:0.07,cp:'ANNUELS',nc:1,bc:0.037,br:0.028,pc:-1,dg:0,pl:0,ab:0,dr:0,nb:1},
   {t:0,pi:81,cpt:'92200241481',nom:'CAPRIONA',ct:'Compte-titres',enc:500000,uf:'',ca:''},
   {t:1,i:82,isin:'XS3033811632',exit:'',nom:'NEXAUTOCALL ALEXA COPPER MINING FEVRIER 2026',sj:'INDICE',sec:'AUTRES',bk:'NEXO',pays:'ETRANGER',enc:522000,uf:0.05,ca:26100,ds:'27/02/2026',str_:'862,1251 pts',dec:'50  pts',tx:0.113,cp:'TRIMESTRIELS',nc:1,bc:-0.2,br:0,pc:-0.5,dg:0,pl:0,ab:0,dr:0,nb:9},
@@ -3448,6 +3448,44 @@ clOf[89] = PRODUITS.filter(function(r){ return r.t===0 && r.pi===89; });
       c.STELLANTIS=17.14; c.MERCEDES=7.20; c.ENGIE=7.20; c.TAUX=28.82;
       c.SCOR=7.20; c.ICADE=7.20; c.CARREFOUR=3.60; c.EDENRED=3.60;
       c['LVMH/SANOFI/TOTAL']=3.60; c['ARM/PDD']=3.60; c.INDICE=3.60;
+    }
+  });
+})();
+
+// ── EXPO : XS3156906847 — correction clients i:80 ────────────────────────
+// Clients retirés (mauvais): COLOMBINI (50k TOTAL), SCI KLEBER (50k TOTAL), ALTER EGO (10k TOTAL)
+// Clients ajoutés (corrects): REGLAT Laurent (50k TOTAL), PAYET Romain (50k TOTAL), SEL DR GUEMMAR (10k TOTAL)
+(function(){
+  EXPO.forEach(function(c){
+    // REGLAT Laurent (2407-156052) : +50k TOTAL  → enc 150k→200k
+    if(c.cpt==='2407-156052'){
+      c.enc=200000; c.TOTAL=40; c.STELLANTIS=25; c['PERNOD RICARD']=10; c['LVMH/BNP/RENAULT']=25;
+    }
+    // PAYET Romain (93100278401) : +50k TOTAL  → enc 404k→454k
+    if(c.cpt==='93100278401'){
+      c.enc=454000; c.TOTAL=11.01;
+      c.TAUX=4.41; c['CREDIT AGRICOLE']=8.60; c.CARREFOUR=11.02; c.ENI=22.03;
+      c.SOLVAY=5.51; c.EDENRED=9.91; c['LVMH/SANOFI/TOTAL']=11.01; c.INDICE=11.01;
+    }
+    // SEL DR GUEMMAR (92200245041) : +10k TOTAL  → enc 15k→25k
+    if(c.cpt==='92200245041'){
+      c.enc=25000; c.TOTAL=40; c.FDJ=60;
+    }
+    // COLOMBINI Frederic (92200242915) : -50k TOTAL  → enc 239k→189k
+    if(c.cpt==='92200242915'){
+      c.enc=189000; c.TOTAL=0;
+      c.STELLANTIS=26.46; c['CREDIT AGRICOLE']=21.17; c.CARREFOUR=27.51;
+      c.SOLVAY=13.23; c.EDENRED=7.94;
+    }
+    // SCI KLEBER HOEPFFNER (92200242162) : -50k TOTAL  → enc 95k→45k
+    if(c.cpt==='92200242162'){
+      c.enc=45000; c.TOTAL=0; c.SCOR=55.56; c.EDENRED=44.44;
+    }
+    // ALTER EGO HOLDING (93100136001) : -10k TOTAL  → enc 1328k→1318k
+    if(c.cpt==='93100136001'){
+      c.enc=1318000; c.TOTAL=0;
+      c.ENGIE=7.59; c.TAUX=48.03; c.SCOR=10.32; c['PERNOD RICARD']=7.59;
+      c.SOLVAY=6.07; c.FDJ=4.86; c.EDENRED=3.79; c['ARM/PDD']=3.03; c.INDICE=3.79;
     }
   });
 })();
